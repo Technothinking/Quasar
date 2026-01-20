@@ -1,13 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 
 export default function LoginScreen({ route, navigation }) {
   const { role } = route.params;
   const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSendOTP = () => {
+    if (!phone) {
+      setError('Mobile number is required');
+      return;
+    }
+
+    if (phone.length !== 10) {
+      setError('Enter a valid 10-digit mobile number');
+      return;
+    }
+
+    setError('');
+    navigation.navigate('OTP', { role, phone });
+  };
 
   return (
     <View style={styles.container}>
-      {/* Logo at top-left */}
+      {/* Logo */}
       <View style={styles.logoContainer}>
         <View style={styles.logoCircle}>
           <Text style={styles.logoEmoji}>🏗</Text>
@@ -15,7 +31,6 @@ export default function LoginScreen({ route, navigation }) {
         <Text style={styles.appName}>ConstructPro</Text>
       </View>
 
-      {/* Title and Role */}
       <Text style={styles.title}>Login</Text>
       <Text style={styles.subtitle}>Role: {role}</Text>
 
@@ -24,15 +39,26 @@ export default function LoginScreen({ route, navigation }) {
         placeholder="Enter phone number"
         placeholderTextColor="#9CA3AF"
         keyboardType="phone-pad"
+        maxLength={10}
         value={phone}
-        onChangeText={setPhone}
+        onChangeText={(text) => {
+          setPhone(text.replace(/[^0-9]/g, ''));
+          setError('');
+        }}
         style={styles.input}
       />
 
-      {/* Send OTP Button */}
+      {/* Error message */}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      {/* Send OTP */}
       <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('OTP', { role })}
+        style={[
+          styles.button,
+          phone.length !== 10 && { opacity: 0.6 }
+        ]}
+        onPress={handleSendOTP}
+        disabled={phone.length !== 10}
       >
         <Text style={styles.buttonText}>Send OTP</Text>
       </TouchableOpacity>
@@ -79,25 +105,26 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#F4B400', // yellow border
+    borderColor: '#F4B400',
     borderRadius: 14,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 8,
     color: 'white',
   },
+  errorText: {
+    color: '#ef4444',
+    marginBottom: 16,
+    fontSize: 13,
+  },
   button: {
-    backgroundColor: '#F4B400', // yellow button
+    backgroundColor: '#F4B400',
     padding: 16,
     borderRadius: 14,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
     elevation: 4,
   },
   buttonText: {
-    color: '#0b0f14', // dark text for contrast
+    color: '#0b0f14',
     fontSize: 18,
     fontWeight: '700',
   },

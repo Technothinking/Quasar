@@ -14,8 +14,10 @@ export default function ProjectDashboardScreen({ route, navigation }) {
     { title: 'Attendance', screen: 'Attendance', icon: '👷' },
     { title: 'Material Request', screen: 'Material', icon: '📦' },
     { title: 'Issues & Delays', screen: 'Issue', icon: '⚠️' },
-    { title: 'Site Photos', screen: 'Issue', icon: '📸' }, // temp reuse
+    { title: 'Site Photos', screen: 'SitePhotos', icon: '📸' },
+    { title: 'Task Management', screen: 'TaskManagement', icon: '📋' }, // ✅ NEW
   ];
+
 
   return (
     <View style={styles.container}>

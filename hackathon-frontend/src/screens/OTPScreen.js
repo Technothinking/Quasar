@@ -4,8 +4,21 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 export default function OTPScreen({ route, navigation }) {
   const { role } = route.params;
   const [otp, setOtp] = useState('');
+  const [error, setError] = useState('');
 
   const verifyOTP = () => {
+    if (!otp) {
+      setError('OTP is required');
+      return;
+    }
+
+    if (otp.length !== 6) {
+      setError('Enter a valid 6-digit OTP');
+      return;
+    }
+
+    setError('');
+
     const normalizedRole = role.trim().toLowerCase();
 
     switch (normalizedRole) {
@@ -18,7 +31,7 @@ export default function OTPScreen({ route, navigation }) {
         break;
 
       case 'supervisor':
-      case 'site engineer': // future-proof
+      case 'site engineer':
         navigation.replace('SupervisorStack');
         break;
 
@@ -27,7 +40,6 @@ export default function OTPScreen({ route, navigation }) {
         break;
 
       default:
-        console.log('Unknown role:', role);
         navigation.replace('WorkerHome');
     }
   };
@@ -51,12 +63,26 @@ export default function OTPScreen({ route, navigation }) {
         placeholder="Enter OTP"
         placeholderTextColor="#9CA3AF"
         keyboardType="number-pad"
+        maxLength={6}
         value={otp}
-        onChangeText={setOtp}
+        onChangeText={(text) => {
+          setOtp(text.replace(/[^0-9]/g, ''));
+          setError('');
+        }}
         style={styles.input}
       />
 
-      <TouchableOpacity style={styles.button} onPress={verifyOTP}>
+      {/* Error message */}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      <TouchableOpacity
+        style={[
+          styles.button,
+          otp.length !== 6 && { opacity: 0.6 }
+        ]}
+        onPress={verifyOTP}
+        disabled={otp.length !== 6}
+      >
         <Text style={styles.buttonText}>Verify</Text>
       </TouchableOpacity>
     </View>
@@ -105,11 +131,17 @@ const styles = StyleSheet.create({
     borderColor: '#F4B400',
     borderRadius: 14,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 8,
     color: 'white',
     textAlign: 'center',
     letterSpacing: 8,
     fontSize: 20,
+  },
+  errorText: {
+    color: '#ef4444',
+    marginBottom: 16,
+    fontSize: 13,
+    textAlign: 'center',
   },
   button: {
     backgroundColor: '#F4B400',
