@@ -5,6 +5,9 @@ from app.db.base import Base
 from app.models.project import Project
 from app.models.project_milestone import ProjectMilestone
 from app.models.dpr import DPR
+from app.models.ra_bill import RABill
+from app.models.gst_invoice import GSTInvoice
+
 
 def init_db():
     Base.metadata.create_all(bind=engine)
