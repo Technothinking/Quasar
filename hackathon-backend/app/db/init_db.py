@@ -11,6 +11,7 @@ from app.models.task import Task
 from app.models.project_site import ProjectSite
 from app.models.attendance import Attendance
 from app.models.project_site import ProjectSite
+from app.models.image import Image
 
 def init_db():
     Base.metadata.create_all(bind=engine)
