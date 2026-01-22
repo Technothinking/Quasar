@@ -24,33 +24,52 @@ export default function TaskManagementScreen() {
   ]);
 
   const updateStatus = (id) => {
-    setTasks(tasks.map(task =>
-      task.id === id
-        ? {
-            ...task,
-            status:
-              task.status === 'Pending'
-                ? 'In Progress'
-                : task.status === 'In Progress'
-                ? 'Completed'
-                : 'Completed',
-          }
-        : task
-    ));
+    setTasks(tasks.map(task => {
+      if (task.id !== id) return task;
+
+      let nextStatus =
+        task.status === 'Pending'
+          ? 'In Progress'
+          : task.status === 'In Progress'
+          ? 'Completed'
+          : 'Completed';
+
+      return { ...task, status: nextStatus };
+    }));
+  };
+
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'Pending':
+        return styles.pending;
+      case 'In Progress':
+        return styles.inProgress;
+      case 'Completed':
+        return styles.completed;
+      default:
+        return {};
+    }
   };
 
   const renderTask = ({ item }) => (
     <View style={styles.taskCard}>
       <Text style={styles.taskTitle}>{item.task}</Text>
       <Text style={styles.taskMeta}>👷 Assigned to: {item.assignee}</Text>
-      <Text style={styles.taskStatus}>⏳ Status: {item.status}</Text>
+
+      <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
+        <Text style={styles.statusText}>{item.status}</Text>
+      </View>
 
       {item.status !== 'Completed' && (
         <TouchableOpacity
           style={styles.statusBtn}
           onPress={() => updateStatus(item.id)}
         >
-          <Text style={styles.statusBtnText}>Update Status</Text>
+          <Text style={styles.statusBtnText}>
+            {item.status === 'Pending'
+              ? 'Start Task'
+              : 'Mark Completed'}
+          </Text>
         </TouchableOpacity>
       )}
     </View>
@@ -58,7 +77,6 @@ export default function TaskManagementScreen() {
 
   return (
     <View style={styles.container}>
-
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoBox}>
@@ -67,7 +85,6 @@ export default function TaskManagementScreen() {
         <Text style={styles.heading}>My Tasks</Text>
       </View>
 
-      {/* Task List */}
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
@@ -88,7 +105,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
 
-  /* Header */
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -100,16 +116,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginRight: 12,
   },
-  logoEmoji: {
-    fontSize: 24,
-  },
+  logoEmoji: { fontSize: 24 },
   heading: {
     fontSize: 22,
     fontWeight: '700',
     color: '#FFFFFF',
   },
 
-  /* Tasks */
   taskCard: {
     backgroundColor: '#121826',
     padding: 16,
@@ -128,16 +141,26 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontSize: 13,
   },
-  taskStatus: {
-    color: '#F4B400',
+
+  statusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginTop: 8,
+  },
+  pending: { backgroundColor: '#F4B400' },
+  inProgress: { backgroundColor: '#3B82F6' },
+  completed: { backgroundColor: '#22C55E' },
+  statusText: {
+    color: '#0B0F14',
     fontSize: 12,
-    marginTop: 6,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   statusBtn: {
     backgroundColor: '#1F2937',
-    marginTop: 10,
+    marginTop: 12,
     padding: 10,
     borderRadius: 10,
     alignItems: 'center',
