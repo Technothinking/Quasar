@@ -8,6 +8,10 @@ import DPRScreen from '../screens/supervisor/DPRScreen';
 import AttendanceScreen from '../screens/supervisor/AttendanceScreen';
 import MaterialScreen from '../screens/supervisor/MaterialScreen';
 import IssueScreen from '../screens/supervisor/IssueScreen';
+import SitePhotosScreen from '../screens/supervisor/SitePhotosScreen';
+import TaskManagementScreen from '../screens/supervisor/TaskManagementScreen';
+import StockUpdateScreen from '../screens/supervisor/StockUpdateScreen';
+import GSTInvoices from '../screens/supervisor/GSTInvoices';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +34,12 @@ export default function SupervisorStack() {
       <Stack.Screen name="Attendance" component={AttendanceScreen} />
       <Stack.Screen name="Material" component={MaterialScreen} />
       <Stack.Screen name="Issue" component={IssueScreen} />
+      <Stack.Screen name="SitePhotos" component={SitePhotosScreen} />
+      <Stack.Screen name="TaskManagement" component={TaskManagementScreen} />
+      <Stack.Screen name="StockUpdate" component={StockUpdateScreen} />
+      <Stack.Screen name="GSTInvoices" component={GSTInvoices} />
+
+      
     </Stack.Navigator>
   );
 }

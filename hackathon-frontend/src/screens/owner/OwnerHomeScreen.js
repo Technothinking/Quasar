@@ -6,29 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
-import { useLanguage } from '../../context/LanguageContext';
 
-/* 🌐 Translations (UI ONLY) */
-const translations = {
-  en: {
-    heading: 'Your Projects',
-    subHeading: 'Select a project to manage site work',
-  },
-  hi: {
-    heading: 'आपकी परियोजनाएँ',
-    subHeading: 'साइट प्रबंधन के लिए परियोजना चुनें',
-  },
-  mr: {
-    heading: 'तुमचे प्रकल्प',
-    subHeading: 'साइट कामकाजासाठी प्रकल्प निवडा',
-  },
-  ta: {
-    heading: 'உங்கள் திட்டங்கள்',
-    subHeading: 'தள மேலாண்மைக்கான திட்டத்தை தேர்வு செய்யவும்',
-  },
-};
-
-/* 🔌 Backend / Offline Cached Data (DO NOT TRANSLATE) */
 const projects = [
   { id: '1', name: 'Metro Line 4', area: 'Andheri East' },
   { id: '2', name: 'Sky Tower', area: 'Lower Parel' },
@@ -36,16 +14,13 @@ const projects = [
   { id: '4', name: 'Highway Expansion', area: 'Panvel' },
 ];
 
-export default function SupervisorHomeScreen({ navigation }) {
-  const { language } = useLanguage();
-  const t = translations[language];
-
+export default function OwnerHomeScreen({ navigation }) {
   const renderItem = ({ item }) => (
     <TouchableOpacity
       activeOpacity={0.85}
       style={styles.card}
       onPress={() =>
-        navigation.navigate('ProjectDashboard', { project: item })
+        navigation.navigate('OwnerProjectDashboard', { project: item })
       }
     >
       <Text style={styles.projectName}>{item.name}</Text>
@@ -62,8 +37,10 @@ export default function SupervisorHomeScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.heading}>{t.heading}</Text>
-          <Text style={styles.subHeading}>{t.subHeading}</Text>
+          <Text style={styles.heading}>Your Projects</Text>
+          <Text style={styles.subHeading}>
+            High-level overview & approvals
+          </Text>
         </View>
 
         <View style={styles.logoBox}>
@@ -91,6 +68,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
 
+  /* Header */
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -116,6 +94,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
 
+  /* Card */
   card: {
     backgroundColor: '#121826',
     padding: 20,
@@ -123,6 +102,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#1F2937',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
     elevation: 6,
   },
   projectName: {

@@ -6,29 +6,29 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-export default function ProjectDashboardScreen({ route, navigation }) {
+export default function ManagerProjectDashboardScreen({ route, navigation }) {
   const { project } = route.params;
 
   const modules = [
-    { title: 'Daily Progress Report', screen: 'DPR', icon: '📝' },
-    { title: 'Attendance', screen: 'Attendance', icon: '👷' },
-    { title: 'Material Request', screen: 'Material', icon: '📦' },
-    { title: 'Issues & Delays', screen: 'Issue', icon: '⚠️' },
-    { title: 'Site Photos', screen: 'SitePhotos', icon: '📸' },
-    { title: 'Task Management', screen: 'TaskManagement', icon: '📋' }, 
-    { title: 'Stock Update', screen: 'StockUpdate', icon: '🏗' },
+    { title: 'Material Approvals', screen: 'MaterialApproval', icon: '📦' },
+    { title: 'Supervisor Reports', screen: 'SupervisorReports', icon: '📊' },
+    { title: 'Site Issues', screen: 'IssueReview', icon: '⚠️' },
+    { title: 'Attendance Overview', screen: 'AttendanceOverview', icon: '👷' },
+    { title: 'Site Photos Review', screen: 'SitePhotosReview', icon: '📸' },
+    { title: 'Task Assignment', screen: 'TaskAssignment', icon: '📋' },
+    {title: 'Stock Tracking', screen: 'StockTracking', icon: '🏗' },
     {title: 'GST Invoices', screen: 'GSTInvoices', icon: '🧾' },
   ];
 
-
   return (
     <View style={styles.container}>
-      {/* Header with logo top-right */}
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.projectName}>{project.name}</Text>
           <Text style={styles.area}>📍 {project.area}</Text>
         </View>
+
         <View style={styles.logoBox}>
           <Text style={styles.logoEmoji}>🏗</Text>
         </View>
@@ -40,7 +40,8 @@ export default function ProjectDashboardScreen({ route, navigation }) {
           <TouchableOpacity
             key={index}
             style={styles.card}
-            onPress={() => navigation.navigate(item.screen)}
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate(item.screen, { project })}
           >
             <Text style={styles.icon}>{item.icon}</Text>
             <Text style={styles.text}>{item.title}</Text>

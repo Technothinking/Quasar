@@ -1,71 +1,103 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useLanguage } from '../context/LanguageContext';
+
+const translations = {
+  en: { title: 'Welcome to ConstructPro', select: 'Select Language' },
+  hi: { title: 'कंस्ट्रक्टप्रो में आपका स्वागत है', select: 'भाषा चुनें' },
+  mr: { title: 'कन्स्ट्रक्टप्रो मध्ये स्वागत आहे', select: 'भाषा निवडा' },
+  ta: { title: 'கன்ஸ்ட்ரக்ட் ப்ரோ வரவேற்கிறது', select: 'மொழியைத் தேர்ந்தெடுக்கவும்' },
+};
 
 export default function WelcomeScreen({ navigation }) {
+  const { language, setLanguage } = useLanguage();
+  const t = translations[language];
+
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: "#0b0f14",
-        justifyContent: "center",
-        paddingHorizontal: 24,
-      }}
-    >
-      {/* Logo */}
-      <View style={{ alignItems: "center", marginBottom: 70 }}>
-        <View
-          style={{
-            backgroundColor: "#facc15",
-            padding: 22,
-            borderRadius: 20,
-            marginBottom: 16,
-          }}
-        >
-          {/* Emoji wrapped in Text */}
-          <Text style={{ fontSize: 42 }}>🏗</Text>
-        </View>
+    <View style={styles.container}>
 
-        <Text style={{ color: "white", fontSize: 32, fontWeight: "bold" }}>
-          ConstructPro
-        </Text>
+      <Text style={styles.logo}>🏗</Text>
+      <Text style={styles.title}>{t.title}</Text>
 
-        <Text style={{ color: "#9CA3AF", marginTop: 6, textAlign: "center" }}>
-          Site Management Made Simple
-        </Text>
+      <Text style={styles.subtitle}>{t.select}</Text>
+
+      {/* 🌐 Language Buttons */}
+      <View style={styles.langRow}>
+        {['en', 'hi', 'mr', 'ta'].map(lang => (
+          <TouchableOpacity
+            key={lang}
+            onPress={() => setLanguage(lang)}
+            style={[
+              styles.langBtn,
+              language === lang && styles.active,
+            ]}
+          >
+            <Text style={styles.langText}>{lang.toUpperCase()}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* Get Started Button */}
       <TouchableOpacity
-        style={{
-          backgroundColor: "#F4B400",
-          padding: 18,
-          borderRadius: 14,
-          marginBottom: 16,
-        }}
-        onPress={() => navigation.navigate("RoleSelection")} // Fixed screen name
+        style={styles.startBtn}
+        onPress={() => navigation.navigate('RoleSelection')}
       >
-        <Text
-          style={{
-            textAlign: "center",
-            fontWeight: "bold",
-            fontSize: 18,
-            color: "#0b0f14",
-          }}
-        >
-          Get Started
-        </Text>
+        <Text style={styles.startText}>Continue</Text>
       </TouchableOpacity>
 
-      {/* Small descriptive subtitle */}
-      <Text
-        style={{
-          textAlign: "center",
-          color: "#6B7280",
-          fontSize: 14,
-          marginTop: 12,
-        }}
-      >
-        Manage your construction site efficiently with roles and tasks.
-      </Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0b0f14',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  logo: {
+    fontSize: 60,
+    marginBottom: 20,
+  },
+  title: {
+    color: 'white',
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  subtitle: {
+    color: '#9CA3AF',
+    marginBottom: 12,
+  },
+  langRow: {
+    flexDirection: 'row',
+    marginBottom: 24,
+  },
+  langBtn: {
+    borderWidth: 1,
+    borderColor: '#1F2937',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    marginHorizontal: 6,
+  },
+  active: {
+    borderColor: '#F4B400',
+  },
+  langText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  startBtn: {
+    backgroundColor: '#F4B400',
+    paddingHorizontal: 30,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  startText: {
+    color: '#0b0f14',
+    fontWeight: '700',
+  },
+});
