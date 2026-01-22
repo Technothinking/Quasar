@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 
 export default function ProjectDashboardScreen({ route, navigation }) {
@@ -15,15 +16,15 @@ export default function ProjectDashboardScreen({ route, navigation }) {
     { title: 'Material Request', screen: 'Material', icon: '📦' },
     { title: 'Issues & Delays', screen: 'Issue', icon: '⚠️' },
     { title: 'Site Photos', screen: 'SitePhotos', icon: '📸' },
-    { title: 'Task Management', screen: 'TaskManagement', icon: '📋' }, 
+    { title: 'Task Management', screen: 'TaskManagement', icon: '📋' },
     { title: 'Stock Update', screen: 'StockUpdate', icon: '🏗' },
-    {title: 'GST Invoices', screen: 'GSTInvoices', icon: '🧾' },
+    { title: 'GST Invoices', screen: 'GSTInvoices', icon: '🧾' },
+    { title: 'CheckIn/Out', screen: 'CheckInOut', icon: '⏰' },
   ];
-
 
   return (
     <View style={styles.container}>
-      {/* Header with logo top-right */}
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.projectName}>{project.name}</Text>
@@ -34,8 +35,11 @@ export default function ProjectDashboardScreen({ route, navigation }) {
         </View>
       </View>
 
-      {/* Modules Grid */}
-      <View style={styles.grid}>
+      {/* Scrollable Modules */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.grid}
+      >
         {modules.map((item, index) => (
           <TouchableOpacity
             key={index}
@@ -46,7 +50,7 @@ export default function ProjectDashboardScreen({ route, navigation }) {
             <Text style={styles.text}>{item.title}</Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -84,11 +88,12 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
 
-  /* Modules Grid */
+  /* Grid */
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    paddingBottom: 30, // prevents last row from cutting
   },
   card: {
     width: '48%',
