@@ -10,33 +10,40 @@ import {
 
 export default function MaterialScreen() {
   const [materials, setMaterials] = useState([
-    { id: '1', name: 'Cement', quantity: '50 Bags' },
-    { id: '2', name: 'Bricks', quantity: '500' },
-    { id: '3', name: 'Steel Rods', quantity: '100 Kg' },
+    { id: '1', name: 'Cement', quantity: '50', unit: 'Bags' },
+    { id: '2', name: 'Bricks', quantity: '500', unit: 'Nos' },
+    { id: '3', name: 'Steel Rods', quantity: '100', unit: 'Kg' },
   ]);
 
   const [newMaterial, setNewMaterial] = useState('');
   const [newQuantity, setNewQuantity] = useState('');
+  const [newUnit, setNewUnit] = useState('');
 
   const handleAddMaterial = () => {
-    if (!newMaterial.trim() || !newQuantity.trim()) {
-      alert('Please fill both fields!');
+    if (!newMaterial || !newQuantity || !newUnit) {
+      alert('Please fill all fields!');
       return;
     }
+
     const newItem = {
-      id: (materials.length + 1).toString(),
+      id: Date.now().toString(),
       name: newMaterial,
       quantity: newQuantity,
+      unit: newUnit,
     };
+
     setMaterials([newItem, ...materials]);
     setNewMaterial('');
     setNewQuantity('');
+    setNewUnit('');
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Text style={styles.cardText}>{item.name}</Text>
-      <Text style={styles.cardQuantity}>{item.quantity}</Text>
+      <Text style={styles.cardQuantity}>
+        {item.quantity} {item.unit}
+      </Text>
     </View>
   );
 
@@ -63,10 +70,20 @@ export default function MaterialScreen() {
       <Text style={styles.label}>Quantity</Text>
       <TextInput
         style={styles.input}
-        placeholder="e.g. 50 Bags"
+        placeholder="e.g. 50"
         placeholderTextColor="#9CA3AF"
+        keyboardType="numeric"
         value={newQuantity}
         onChangeText={setNewQuantity}
+      />
+
+      <Text style={styles.label}>Unit</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="e.g. Kg / Bags / Nos"
+        placeholderTextColor="#9CA3AF"
+        value={newUnit}
+        onChangeText={setNewUnit}
       />
 
       <TouchableOpacity style={styles.button} onPress={handleAddMaterial}>
@@ -79,13 +96,12 @@ export default function MaterialScreen() {
 
   return (
     <FlatList
-      style={{ backgroundColor: '#0B0F14' }} // ensures background is black
+      style={{ backgroundColor: '#0B0F14' }}
       data={materials}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
       ListHeaderComponent={ListHeader}
       contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
-      showsVerticalScrollIndicator={false}
     />
   );
 }
@@ -102,9 +118,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginRight: 12,
   },
-  logoEmoji: {
-    fontSize: 24,
-  },
+  logoEmoji: { fontSize: 24 },
   heading: {
     fontSize: 22,
     fontWeight: '700',
@@ -114,7 +128,6 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     marginBottom: 6,
     marginTop: 12,
-    fontSize: 14,
   },
   input: {
     backgroundColor: '#121826',
@@ -123,7 +136,6 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: '#1F2937',
-    fontSize: 14,
   },
   button: {
     backgroundColor: '#F4B400',
@@ -132,11 +144,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 16,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
   },
   buttonText: {
     color: '#0B0F14',
@@ -148,7 +155,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 10,
-    marginTop: 20,
   },
   card: {
     backgroundColor: '#121826',
@@ -166,6 +172,5 @@ const styles = StyleSheet.create({
   cardQuantity: {
     color: '#9CA3AF',
     marginTop: 4,
-    fontSize: 14,
   },
 });

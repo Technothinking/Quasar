@@ -12,6 +12,7 @@ import SitePhotosScreen from '../screens/supervisor/SitePhotosScreen';
 import TaskManagementScreen from '../screens/supervisor/TaskManagementScreen';
 import StockUpdateScreen from '../screens/supervisor/StockUpdateScreen';
 import GSTInvoices from '../screens/supervisor/GSTInvoices';
+import CheckInOutScreen from '../screens/supervisor/CheckInOutScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -38,6 +39,7 @@ export default function SupervisorStack() {
       <Stack.Screen name="TaskManagement" component={TaskManagementScreen} />
       <Stack.Screen name="StockUpdate" component={StockUpdateScreen} />
       <Stack.Screen name="GSTInvoices" component={GSTInvoices} />
+      <Stack.Screen name="CheckInOut" component={CheckInOutScreen} />
 
       
     </Stack.Navigator>
