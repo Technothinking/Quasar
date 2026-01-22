@@ -6,11 +6,11 @@ import RoleSelectionScreen from '../screens/RoleSelectionScreen';
 import LoginScreen from '../screens/LoginScreen';
 import OTPScreen from '../screens/OTPScreen';
 
-import OwnerHomeScreen from '../screens/OwnerHomeScreen';
-import ManagerHomeScreen from '../screens/ManagerHomeScreen';
-import WorkerHomeScreen from '../screens/WorkerHomeScreen';
 
+import ManagerStack from './ManagerStack';
+import OwnerStack from './OwnerStack';
 import SupervisorStack from './SupervisorStack';
+import WorkerStack from './WorkerStack';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,13 +22,13 @@ export default function AppNavigator() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="OTP" component={OTPScreen} />
 
-      <Stack.Screen name="OwnerHome" component={OwnerHomeScreen} />
-      <Stack.Screen name="ManagerHome" component={ManagerHomeScreen} />
+      <Stack.Screen name="ManagerStack" component={ManagerStack} />
+      <Stack.Screen name="OwnerStack" component={OwnerStack} />
 
-      {/* ✅ SUPERVISOR STACK */}
+    
       <Stack.Screen name="SupervisorStack" component={SupervisorStack} />
 
-      <Stack.Screen name="WorkerHome" component={WorkerHomeScreen} />
+      <Stack.Screen name="WorkerStack" component={WorkerStack} />
     </Stack.Navigator>
   );
 }

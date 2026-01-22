@@ -1,24 +1,84 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { useLanguage } from '../context/LanguageContext';
+
+/* 🌐 Translations */
+const translations = {
+  en: {
+    appName: 'ConstructPro',
+    title: 'Login',
+    phonePlaceholder: 'Enter phone number',
+    sendOTP: 'Send OTP',
+    errors: {
+      empty: 'Mobile number is required',
+      invalid: 'Enter a valid 10-digit mobile number',
+    },
+    roleLabel: 'Role',
+  },
+  hi: {
+    appName: 'कंस्ट्रक्टप्रो',
+    title: 'लॉगिन',
+    phonePlaceholder: 'मोबाइल नंबर दर्ज करें',
+    sendOTP: 'OTP भेजें',
+    errors: {
+      empty: 'मोबाइल नंबर आवश्यक है',
+      invalid: 'सही 10 अंकों का नंबर दर्ज करें',
+    },
+    roleLabel: 'भूमिका',
+  },
+  mr: {
+    appName: 'कन्स्ट्रक्टप्रो',
+    title: 'लॉगिन',
+    phonePlaceholder: 'फोन नंबर टाका',
+    sendOTP: 'OTP पाठवा',
+    errors: {
+      empty: 'मोबाईल नंबर आवश्यक आहे',
+      invalid: 'योग्य 10 अंकी नंबर टाका',
+    },
+    roleLabel: 'भूमिका',
+  },
+  ta: {
+    appName: 'கன்ஸ்ட்ரக்ட் ப்ரோ',
+    title: 'லாகின்',
+    phonePlaceholder: 'தொலைபேசி எண்ணை உள்ளிடவும்',
+    sendOTP: 'OTP அனுப்பு',
+    errors: {
+      empty: 'தொலைபேசி எண் தேவையுள்ளது',
+      invalid: 'சரியான 10 இலக்க எண்ணை உள்ளிடவும்',
+    },
+    roleLabel: 'பாத்திரம்',
+  },
+};
+
+/* 👤 Role titles for multilingual display */
+const roleTitles = {
+  en: { Owner: 'Owner', Manager: 'Manager', Supervisor: 'Supervisor', Worker: 'Worker' },
+  hi: { Owner: 'मालिक', Manager: 'प्रबंधक', Supervisor: 'सुपरवाइज़र', Worker: 'कर्मचारी' },
+  mr: { Owner: 'मालक', Manager: 'व्यवस्थापक', Supervisor: 'सुपरवायझर', Worker: 'कामगार' },
+  ta: { Owner: 'உயர்முறை', Manager: 'மேலாளர்', Supervisor: 'மேற்பார்வையாளர்', Worker: 'தொழிலாளர்' },
+};
 
 export default function LoginScreen({ route, navigation }) {
-  const { role } = route.params;
+  const { language } = useLanguage();
+  const t = translations[language];
+  const roleName = roleTitles[language][route.params.role];
+
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
 
   const handleSendOTP = () => {
     if (!phone) {
-      setError('Mobile number is required');
+      setError(t.errors.empty);
       return;
     }
 
     if (phone.length !== 10) {
-      setError('Enter a valid 10-digit mobile number');
+      setError(t.errors.invalid);
       return;
     }
 
     setError('');
-    navigation.navigate('OTP', { role, phone });
+    navigation.navigate('OTP', { role: route.params.role, phone });
   };
 
   return (
@@ -28,15 +88,15 @@ export default function LoginScreen({ route, navigation }) {
         <View style={styles.logoCircle}>
           <Text style={styles.logoEmoji}>🏗</Text>
         </View>
-        <Text style={styles.appName}>ConstructPro</Text>
+        <Text style={styles.appName}>{t.appName}</Text>
       </View>
 
-      <Text style={styles.title}>Login</Text>
-      <Text style={styles.subtitle}>Role: {role}</Text>
+      <Text style={styles.title}>{t.title}</Text>
+      <Text style={styles.subtitle}>{`${t.roleLabel}: ${roleName}`}</Text>
 
       {/* Phone Input */}
       <TextInput
-        placeholder="Enter phone number"
+        placeholder={t.phonePlaceholder}
         placeholderTextColor="#9CA3AF"
         keyboardType="phone-pad"
         maxLength={10}
@@ -53,19 +113,17 @@ export default function LoginScreen({ route, navigation }) {
 
       {/* Send OTP */}
       <TouchableOpacity
-        style={[
-          styles.button,
-          phone.length !== 10 && { opacity: 0.6 }
-        ]}
+        style={[styles.button, phone.length !== 10 && { opacity: 0.6 }]}
         onPress={handleSendOTP}
         disabled={phone.length !== 10}
       >
-        <Text style={styles.buttonText}>Send OTP</Text>
+        <Text style={styles.buttonText}>{t.sendOTP}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
+/* 🎨 Styles */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
