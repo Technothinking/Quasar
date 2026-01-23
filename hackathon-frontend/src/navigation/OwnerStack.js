@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import OwnerLoginScreen from '../screens/owner/OwnerLoginScreen';
 import OwnerHomeScreen from '../screens/owner/OwnerHomeScreen';
 import ProjectDashboardScreen from '../screens/owner/ProjectDashboardScreen';
 import InformationScreen from '../screens/owner/InformationScreen';
@@ -14,6 +15,12 @@ const Stack = createNativeStackNavigator();
 export default function OwnerStack() {
   return (
     <Stack.Navigator>
+      {/* Owner Login */}
+      <Stack.Screen
+        name="OwnerLogin"
+        component={OwnerLoginScreen}
+        options={{ title: 'Owner Login' }}
+      />
       {/* Owner Home */}
       <Stack.Screen
         name="OwnerHome"

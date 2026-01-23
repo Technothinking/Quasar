@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import ManagerLoginScreen from '../screens/manager/ManagerLoginScreen';
 import ManagerHomeScreen from '../screens/manager/ManagerHomeScreen';
 import ProjectDashboardScreen from '../screens/manager/ProjectDashboardScreen';
 import MaterialApprovalScreen from '../screens/manager/MaterialApprovalScreen';
@@ -13,6 +14,14 @@ const Stack = createNativeStackNavigator();
 export default function ManagerStack() {
   return (
     <Stack.Navigator>
+      
+      {/* Manager Login */}
+      <Stack.Screen
+        name="ManagerLogin"
+        component={ManagerLoginScreen}
+        options={{ title: 'Manager Login' }}
+      />
+
       {/* Manager Home */}
       <Stack.Screen
         name="ManagerHome"

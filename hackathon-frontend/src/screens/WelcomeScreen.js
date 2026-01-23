@@ -9,41 +9,48 @@ const translations = {
   ta: { title: 'கன்ஸ்ட்ரக்ட் ப்ரோ வரவேற்கிறது', select: 'மொழியைத் தேர்ந்தெடுக்கவும்' },
 };
 
+// Full language names in native script
+const languageNames = {
+  en: 'English',
+  hi: 'हिंदी',
+  mr: 'मराठी',
+  ta: 'தமிழ்',
+};
+
 export default function WelcomeScreen({ navigation }) {
   const { language, setLanguage } = useLanguage();
   const t = translations[language];
 
   return (
     <View style={styles.container}>
+      {/* 🔰 Logo with yellow background */}
+      <View style={styles.logoBox}>
+        <Text style={styles.logoEmoji}>🏗</Text>
+      </View>
 
-      <Text style={styles.logo}>🏗</Text>
       <Text style={styles.title}>{t.title}</Text>
-
       <Text style={styles.subtitle}>{t.select}</Text>
 
       {/* 🌐 Language Buttons */}
       <View style={styles.langRow}>
-        {['en', 'hi', 'mr', 'ta'].map(lang => (
+        {['en', 'hi', 'mr', 'ta'].map((lang) => (
           <TouchableOpacity
             key={lang}
             onPress={() => setLanguage(lang)}
-            style={[
-              styles.langBtn,
-              language === lang && styles.active,
-            ]}
+            style={[styles.langBtn, language === lang && styles.active]}
           >
-            <Text style={styles.langText}>{lang.toUpperCase()}</Text>
+            <Text style={styles.langText}>{languageNames[lang]}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
+      {/* Continue Button */}
       <TouchableOpacity
         style={styles.startBtn}
         onPress={() => navigation.navigate('RoleSelection')}
       >
         <Text style={styles.startText}>Continue</Text>
       </TouchableOpacity>
-
     </View>
   );
 }
@@ -56,48 +63,67 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
-  logo: {
-    fontSize: 60,
+
+  /* Logo box with yellow background */
+  logoBox: {
+    backgroundColor: '#F4B400',
+    padding: 30,
+    borderRadius: 24,
     marginBottom: 20,
+    elevation: 6,
   },
+  logoEmoji: {
+    fontSize: 50,
+  },
+
   title: {
     color: 'white',
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   subtitle: {
     color: '#9CA3AF',
-    marginBottom: 12,
+    fontSize: 14,
+    marginBottom: 20,
   },
+
+  /* Language buttons row */
   langRow: {
     flexDirection: 'row',
-    marginBottom: 24,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginBottom: 30,
   },
   langBtn: {
     borderWidth: 1,
     borderColor: '#1F2937',
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    marginHorizontal: 6,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    margin: 6,
   },
   active: {
     borderColor: '#F4B400',
+    backgroundColor: '#1c2430',
   },
   langText: {
     color: 'white',
     fontWeight: '600',
   },
+
+  /* Continue button */
   startBtn: {
     backgroundColor: '#F4B400',
-    paddingHorizontal: 30,
-    paddingVertical: 14,
+    paddingHorizontal: 40,
+    paddingVertical: 16,
     borderRadius: 14,
+    elevation: 4,
   },
   startText: {
     color: '#0b0f14',
     fontWeight: '700',
+    fontSize: 16,
   },
 });

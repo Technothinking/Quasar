@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import SupervisorLoginScreen from '../screens/supervisor/SupervisorLoginScreen';
 import SupervisorHomeScreen from '../screens/supervisor/SupervisorHomeScreen';
 import ProjectDashboardScreen from '../screens/supervisor/ProjectDashboardScreen';
 
@@ -19,6 +20,13 @@ const Stack = createNativeStackNavigator();
 export default function SupervisorStack() {
   return (
     <Stack.Navigator>
+      {/* Supervisor Login */}
+      <Stack.Screen
+        name="SupervisorLogin"
+        component={SupervisorLoginScreen}
+        options={{ title: 'Supervisor Login' }}
+      />
+      
       <Stack.Screen
         name="SupervisorHome"
         component={SupervisorHomeScreen}
