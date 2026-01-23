@@ -7,31 +7,40 @@ import {
   FlatList,
 } from 'react-native';
 
+import { today, now } from '../../utils/time';
+import { checkIn, checkOut, getTodayAttendance } from '../../db/attendance';
 export default function CheckInOutScreen() {
   const [checkedIn, setCheckedIn] = useState(false);
   const [logs, setLogs] = useState([]);
 
-  const handleCheckInOut = () => {
-    const entry = {
-      id: Date.now().toString(),
-      type: checkedIn ? 'Check-Out' : 'Check-In',
-      time: new Date().toLocaleTimeString(),
-      date: new Date().toLocaleDateString(),
-      location: '📍 GPS Location Captured',
-    };
+  const handleCheckInOut = async () => {
+    console.log('CHECK-IN BUTTON PRESSED');
 
-    setLogs([entry, ...logs]);
+    if (!checkedIn) {
+      await checkIn({
+        userId: 'SUPERVISOR_1',
+        projectId: 1,
+      });
+    } else {
+      await checkOut('SUPERVISOR_1');
+    }
+
     setCheckedIn(!checkedIn);
+    loadLogs();
+  };
+
+  const loadLogs = async () => {
+    const data = await getTodayAttendance('SUPERVISOR_1');
+    setLogs(data);
   };
 
   const renderLog = ({ item }) => (
-    <View style={styles.logCard}>
-      <Text style={styles.logType}>
-        {item.type === 'Check-In' ? '🟢' : '🔴'} {item.type}
-      </Text>
-      <Text style={styles.logText}>{item.date} • {item.time}</Text>
-      <Text style={styles.logLocation}>{item.location}</Text>
-    </View>
+  <View style={styles.logCard}>
+    <Text style={styles.logType}>{item.event_type}</Text>
+    <Text style={styles.logText}>
+      {new Date(item.timestamp).toLocaleTimeString()}
+    </Text>
+  </View>
   );
 
   return (
@@ -77,7 +86,7 @@ export default function CheckInOutScreen() {
 
       <FlatList
         data={logs}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderLog}
         ListEmptyComponent={
           <Text style={styles.emptyText}>

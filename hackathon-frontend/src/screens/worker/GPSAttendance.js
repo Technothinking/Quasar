@@ -6,6 +6,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useLanguage } from '../../context/LanguageContext';
+import { addAttendanceEvent } from '../../db/attendance';
+import { today, now } from '../../utils/time';
+
 
 /* 🌐 Translations */
 const translations = {
@@ -66,15 +69,17 @@ export default function GPSAttendance() {
   const [checkedIn, setCheckedIn] = useState(false);
   const currentTime = new Date().toLocaleString();
 
-  const handleToggle = () => {
-    setCheckedIn(!checkedIn);
-
-    console.log({
-      status: !checkedIn ? t.checkIn : t.checkOut,
-      time: currentTime,
-      location: 'Lat: 19.0760, Lng: 72.8777 (mock)',
-      synced: false,
+  const handleToggle = async () => {
+    await addAttendanceEvent({
+      workerId: 'WORKER_1',
+      eventType: checkedIn ? 'CHECK_OUT' : 'CHECK_IN',
+      attendanceDate: today(),
+      timestamp: now(),
+      latitude: '19.0760',
+      longitude: '72.8777',
     });
+
+    setCheckedIn(!checkedIn);
   };
 
   return (
