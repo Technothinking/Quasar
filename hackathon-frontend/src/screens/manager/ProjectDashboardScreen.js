@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 
 export default function ManagerProjectDashboardScreen({ route, navigation }) {
@@ -16,12 +17,17 @@ export default function ManagerProjectDashboardScreen({ route, navigation }) {
     { title: 'Attendance Overview', screen: 'AttendanceOverview', icon: '👷' },
     { title: 'Site Photos Review', screen: 'SitePhotosReview', icon: '📸' },
     { title: 'Task Assignment', screen: 'TaskAssignment', icon: '📋' },
-    {title: 'Stock Tracking', screen: 'StockTracking', icon: '🏗' },
-    {title: 'GST Invoices', screen: 'GSTInvoices', icon: '🧾' },
+    { title: 'Stock Tracking', screen: 'StockTracking', icon: '🏗' },
+    { title: 'GST Invoices', screen: 'GSTInvoices', icon: '🧾' },
+    { title: 'View DPRs', screen: 'ViewDPRs', icon: '📝' },
   ];
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 30 }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -48,7 +54,7 @@ export default function ManagerProjectDashboardScreen({ route, navigation }) {
           </TouchableOpacity>
         ))}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
