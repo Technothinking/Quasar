@@ -8,6 +8,7 @@ import MaterialApprovalScreen from '../screens/manager/MaterialApprovalScreen';
 import TaskAssignmentScreen from '../screens/manager/TaskAssignmentScreen';
 import StockTrackingScreen from '../screens/manager/StockTrackingScreen';
 import GSTInvoices from '../screens/manager/GSTInvoices';
+import DPRViewScreen from '../screens/manager/DPRViewScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -62,6 +63,13 @@ export default function ManagerStack() {
         name="GSTInvoices"
         component={GSTInvoices}
         options={{ title: 'GST Invoices' }}
+      />
+
+      {/* View DPRs */}
+      <Stack.Screen
+        name="ViewDPRs"
+        component={DPRViewScreen}
+        options={{ title: 'View DPRs' }}
       />
       
     </Stack.Navigator>
