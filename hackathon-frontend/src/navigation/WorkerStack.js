@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import WorkerLoginScreen from '../screens/worker/WorkerLoginScreen';
 import WorkerHomeScreen from '../screens/worker/WorkerHomeScreen';
 import GPSAttendance from '../screens/worker/GPSAttendance';
 import VoiceUpdates from '../screens/worker/VoiceUpdates';
@@ -17,6 +18,14 @@ export default function WorkerStack() {
         headerTintColor: '#fff',
       }}
     >
+      {/* Worker Login */}
+      <Stack.Screen
+        name="WorkerLogin"  
+        component={WorkerLoginScreen}
+        options={{ title: 'Worker Login' }}
+      />
+      
+      {/* Worker Home */}
       <Stack.Screen
         name="WorkerHome"
         component={WorkerHomeScreen}

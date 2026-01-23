@@ -86,14 +86,24 @@ const roles = [
   { name: 'Worker', icon: '👷' },
 ];
 
-/* 🖥 Role Selection Screen */
 export default function RoleSelectionScreen({ navigation }) {
   const { language } = useLanguage();
   const t = translations[language];
 
+  const handleRolePress = (role) => {
+    if (role === 'Owner') {
+      navigation.navigate('OwnerStack');
+    } else if (role === 'Manager') {
+      navigation.navigate('ManagerStack'); // add later
+    } else if (role === 'Supervisor') {
+      navigation.navigate('SupervisorStack'); // add later
+    } else if (role === 'Worker') {
+      navigation.navigate('WorkerStack'); // add later
+    }
+  };
+
   return (
     <View style={styles.container}>
-
       {/* 🔰 Header */}
       <View style={styles.header}>
         <View style={styles.logoBox}>
@@ -115,7 +125,7 @@ export default function RoleSelectionScreen({ navigation }) {
           key={role.name}
           style={styles.card}
           activeOpacity={0.85}
-          onPress={() => navigation.navigate('Login', { role: role.name })}
+          onPress={() => handleRolePress(role.name)}
         >
           <View style={styles.cardIcon}>
             <Text style={styles.iconText}>{role.icon}</Text>
@@ -131,7 +141,7 @@ export default function RoleSelectionScreen({ navigation }) {
   );
 }
 
-/* 🎨 Styles */
+/* 🎨 Styles (unchanged) */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
