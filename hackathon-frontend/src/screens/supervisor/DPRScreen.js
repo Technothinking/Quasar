@@ -10,6 +10,8 @@ import {
   Alert,
 } from 'react-native';
 
+import { saveDPR } from '../../db/dpr';
+
 const STAGES = [
   'Excavation',
   'Slab',
@@ -54,29 +56,37 @@ export default function DPRScreen() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    console.log('🟣 DPR SUBMIT CLICKED');
+
     if (!stage || !workStatus) {
       Alert.alert('Error', 'Stage of work and work status are mandatory.');
       return;
     }
 
-    const data = {
-      stage,
-      otherNote,
-      workStatus,
-      issues,
-      issueNote,
-    };
+    try {
+      await saveDPR({
+        projectId: 1,
+        userId: 'SUPERVISOR_1',
+        stage,
+        otherNote,
+        workStatus,
+        issues,
+        issueNote,
+      });
 
-    console.log('DPR Submitted:', data);
-    Alert.alert('Success', 'DPR Saved Successfully');
+      Alert.alert('Success', 'DPR saved offline and queued for sync');
 
-    // Reset
-    setStage('');
-    setOtherNote('');
-    setWorkStatus('');
-    setIssues([]);
-    setIssueNote('');
+      // Reset form
+      setStage('');
+      setOtherNote('');
+      setWorkStatus('');
+      setIssues([]);
+      setIssueNote('');
+    } catch (err) {
+      console.log('❌ DPR SAVE FAILED', err);
+      Alert.alert('Error', 'Failed to save DPR');
+    }
   };
 
   return (

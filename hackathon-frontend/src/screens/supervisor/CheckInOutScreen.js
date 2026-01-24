@@ -7,8 +7,8 @@ import {
   FlatList,
 } from 'react-native';
 
-import { today, now } from '../../utils/time';
 import { checkIn, checkOut, getTodayAttendance } from '../../db/attendance';
+
 export default function CheckInOutScreen() {
   const [checkedIn, setCheckedIn] = useState(false);
   const [logs, setLogs] = useState([]);
@@ -16,17 +16,22 @@ export default function CheckInOutScreen() {
   const handleCheckInOut = async () => {
     console.log('CHECK-IN BUTTON PRESSED');
 
-    if (!checkedIn) {
-      await checkIn({
-        userId: 'SUPERVISOR_1',
-        projectId: 1,
-      });
-    } else {
-      await checkOut('SUPERVISOR_1');
-    }
+    try {
+      if (!checkedIn) {
+        await checkIn({
+          userId: 'SUPERVISOR_1',
+          projectId: 1,
+        });
+      } else {
+        // 🔴 FIX: match function signature
+        await checkOut({ userId: 'SUPERVISOR_1' });
+      }
 
-    setCheckedIn(!checkedIn);
-    loadLogs();
+      setCheckedIn(!checkedIn);
+      loadLogs();
+    } catch (e) {
+      console.log('❌ ERROR IN CHECK-IN/OUT', e);
+    }
   };
 
   const loadLogs = async () => {
@@ -35,17 +40,17 @@ export default function CheckInOutScreen() {
   };
 
   const renderLog = ({ item }) => (
-  <View style={styles.logCard}>
-    <Text style={styles.logType}>{item.event_type}</Text>
-    <Text style={styles.logText}>
-      {new Date(item.timestamp).toLocaleTimeString()}
-    </Text>
-  </View>
+    <View style={styles.logCard}>
+      {/* 🔴 FIX: render fields that actually exist */}
+      <Text style={styles.logType}>{item.status}</Text>
+      <Text style={styles.logText}>
+        {item.check_in_time || item.check_out_time}
+      </Text>
+    </View>
   );
 
   return (
     <View style={styles.container}>
-
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoBox}>
@@ -86,7 +91,8 @@ export default function CheckInOutScreen() {
 
       <FlatList
         data={logs}
-        keyExtractor={(item) => item.id.toString()}
+        // 🔴 FIX: correct primary key
+        keyExtractor={(item) => item.local_id}
         renderItem={renderLog}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
@@ -106,7 +112,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
 
-  /* Header */
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -125,7 +130,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  /* Status */
   statusCard: {
     backgroundColor: '#121826',
     padding: 18,
@@ -148,7 +152,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  /* Button */
   actionButton: {
     paddingVertical: 16,
     borderRadius: 16,
@@ -161,7 +164,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  /* Logs */
   sectionTitle: {
     color: '#fff',
     fontSize: 16,
@@ -184,11 +186,6 @@ const styles = StyleSheet.create({
   logText: {
     color: '#9CA3AF',
     fontSize: 13,
-  },
-  logLocation: {
-    color: '#F4B400',
-    fontSize: 12,
-    marginTop: 4,
   },
   emptyText: {
     color: '#9CA3AF',

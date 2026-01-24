@@ -1,56 +1,191 @@
 import { execute, query } from './sqlite';
 import { today, now } from '../utils/time';
-import { v4 as uuidv4 } from 'uuid';
+import * as Crypto from 'expo-crypto';
+import { addToOutbox } from './outbox';
+
+/* =========================================================
+   SUPERVISOR ATTENDANCE
+   ========================================================= */
 
 /* ---------- CHECK IN ---------- */
-
 export const checkIn = async ({
   userId,
   projectId,
   role = 'supervisor',
   method = 'supervisor',
 }) => {
-  return await execute(
-    `INSERT INTO attendances (
-      local_id,
-      project_id,
-      user_id,
+  console.log('🔵 checkIn() START');
+
+  try {
+    const localId = Crypto.randomUUID();
+    const date = today();
+    const time = now();
+
+    await execute(
+      `INSERT INTO attendances (
+        local_id,
+        project_id,
+        user_id,
+        role,
+        date,
+        check_in_time,
+        method,
+        status,
+        created_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        localId,
+        projectId,
+        userId,
+        role,
+        date,
+        time,
+        method,
+        'present',
+        time,
+      ]
+    );
+
+    console.log('🟢 Supervisor attendance saved locally');
+
+    await addToOutbox('/attendance/check-in', 'POST', {
+      id: localId,
+      project_id: projectId,
+      user_id: userId,
       role,
       date,
-      check_in_time,
+      check_in_time: time,
       method,
-      status,
-      sync_status,
-      created_at
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      uuidv4(),
-      projectId,
-      userId,
-      role,
-      today(),
-      now(),
-      method,
-      'present',
-      'pending',
-      now(),
-    ]
-  );
+      status: 'present',
+    });
+
+    console.log('📥 Supervisor check-in queued');
+
+    return { offline: true };
+  } catch (e) {
+    console.log('🔴 ERROR in checkIn()', e);
+    throw e;
+  }
 };
 
 /* ---------- CHECK OUT ---------- */
+export const checkOut = async ({ userId }) => {
+  console.log('🔵 checkOut() START');
 
-export const checkOut = async (userId) => {
-  return await execute(
-    `UPDATE attendances
-     SET check_out_time = ?, updated_at = ?, sync_status = 'pending'
-     WHERE user_id = ? AND date = ?`,
-    [now(), now(), userId, today()]
-  );
+  try {
+    const time = now();
+    const date = today();
+
+    await execute(
+      `UPDATE attendances
+       SET check_out_time = ?, updated_at = ?
+       WHERE user_id = ? AND date = ? AND role = 'supervisor'`,
+      [time, time, userId, date]
+    );
+
+    console.log('🟢 Supervisor attendance updated locally');
+
+    await addToOutbox('/attendance/check-out', 'POST', {
+      user_id: userId,
+      date,
+      check_out_time: time,
+    });
+
+    console.log('📥 Supervisor check-out queued');
+
+    return { offline: true };
+  } catch (e) {
+    console.log('🔴 ERROR in checkOut()', e);
+    throw e;
+  }
 };
 
-/* ---------- READ ---------- */
+/* =========================================================
+   WORKER ATTENDANCE
+   ========================================================= */
+
+export const workerToggleAttendance = async ({
+  workerId,
+  projectId,
+  isCheckIn,
+  latitude,
+  longitude,
+}) => {
+  console.log('🔵 workerToggleAttendance() START');
+
+  const date = today();
+  const time = now();
+
+  if (isCheckIn) {
+    const localId = Crypto.randomUUID();
+
+    await execute(
+      `INSERT INTO attendances (
+        local_id,
+        project_id,
+        user_id,
+        role,
+        date,
+        check_in_time,
+        method,
+        status,
+        created_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        localId,
+        projectId,
+        workerId,
+        'worker',
+        date,
+        time,
+        'gps',
+        'present',
+        time,
+      ]
+    );
+
+    console.log('🟢 Worker check-in saved locally');
+
+    await addToOutbox('/attendance/worker/check-in', 'POST', {
+      id: localId,
+      project_id: projectId,
+      user_id: workerId,
+      role: 'worker',
+      date,
+      check_in_time: time,
+      latitude,
+      longitude,
+      status: 'present',
+    });
+
+    console.log('📥 Worker check-in queued');
+  } else {
+    await execute(
+      `UPDATE attendances
+       SET check_out_time = ?, updated_at = ?
+       WHERE user_id = ? AND date = ? AND role = 'worker'`,
+      [time, time, workerId, date]
+    );
+
+    console.log('🟢 Worker check-out saved locally');
+
+    await addToOutbox('/attendance/worker/check-out', 'POST', {
+      user_id: workerId,
+      date,
+      check_out_time: time,
+    });
+
+    console.log('📥 Worker check-out queued');
+  }
+
+  return { offline: true };
+};
+
+/* =========================================================
+   READ (COMMON)
+   ========================================================= */
 
 export const getTodayAttendance = async (userId) => {
   return await query(
