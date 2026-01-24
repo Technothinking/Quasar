@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { useLanguage } from '../../context/LanguageContext';
 import { workerToggleAttendance } from '../../db/attendance';
+import { getCurrentLocation } from '../../utils/location';
 
 /* 🌐 Translations */
 const translations = {
@@ -34,30 +35,6 @@ const translations = {
     checkOut: 'चेक-आउट',
     syncInfo: '🔄 ऑफलाइन काम करता है — इंटरनेट मिलने पर सिंक होता है',
   },
-  mr: {
-    appName: 'कन्स्ट्रक्टप्रो',
-    title: 'जीपीएस हजेरी',
-    subtitle: 'एक क्लिकमध्ये हजेरी आणि लाइव्ह स्थान',
-    currentLocation: '📍 सध्याचे स्थान',
-    latitude: 'अक्षांश',
-    longitude: 'रेखांश',
-    timestamp: '🕒 टाइमस्टॅम्प',
-    checkIn: 'चेक-इन',
-    checkOut: 'चेक-आउट',
-    syncInfo: '🔄 ऑफलाइन कार्य करते — इंटरनेट उपलब्ध झाल्यावर समक्रमित होते',
-  },
-  ta: {
-    appName: 'கன்ஸ்ட்ரக்ட் ப்ரோ',
-    title: 'ஜிபிஎஸ் வருகை',
-    subtitle: 'ஒரே கிளிக் மூலம் வருகை மற்றும் நேரடி இடம்',
-    currentLocation: '📍 தற்போதைய இடம்',
-    latitude: 'அட்சாங்',
-    longitude: 'நீளங்கள்',
-    timestamp: '🕒 நேரம்',
-    checkIn: 'சேக்-இன்',
-    checkOut: 'சேக்-அவுட்',
-    syncInfo: '🔄 ஆஃப்லைனில் வேலை செய்கிறது — இணையம் கிடைக்கும் போது ஒத்திசைக்கப்படும்',
-  },
 };
 
 export default function GPSAttendance() {
@@ -65,23 +42,39 @@ export default function GPSAttendance() {
   const t = translations[language];
 
   const [checkedIn, setCheckedIn] = useState(false);
+  const [coords, setCoords] = useState(null);
+
   const currentTime = new Date().toLocaleString();
 
   const handleToggle = async () => {
-    await workerToggleAttendance({
-      workerId: 'WORKER_1',
-      projectId: 1,
-      isCheckIn: !checkedIn,
-      latitude: '19.0760',
-      longitude: '72.8777',
-    });
+    try {
+      console.log('🔵 workerToggleAttendance() START');
 
-    setCheckedIn(!checkedIn);
+      // 1️⃣ Fetch GPS
+      const { latitude, longitude, accuracy } = await getCurrentLocation();
+      console.log('📍 GPS FETCHED:', latitude, longitude, 'accuracy:', accuracy);
+
+      // 2️⃣ Store locally + queue for sync
+      await workerToggleAttendance({
+        workerId: 'WORKER_1',     // temp (will come from auth later)
+        projectId: 1,             // temp (will come from backend later)
+        isCheckIn: !checkedIn,
+        latitude,
+        longitude,
+      });
+
+      // 3️⃣ Update UI
+      setCoords({ latitude, longitude });
+      setCheckedIn(!checkedIn);
+
+    } catch (e) {
+      console.log('❌ GPS ATTENDANCE ERROR', e.message);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* Logo Header */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoBox}>
           <Text style={styles.logo}>🏗</Text>
@@ -96,8 +89,14 @@ export default function GPSAttendance() {
       {/* Location Card */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{t.currentLocation}</Text>
-        <Text style={styles.cardText}>{t.latitude}: 19.0760</Text>
-        <Text style={styles.cardText}>{t.longitude}: 72.8777</Text>
+
+        <Text style={styles.cardText}>
+          {t.latitude}: {coords ? coords.latitude : 'Fetching...'}
+        </Text>
+
+        <Text style={styles.cardText}>
+          {t.longitude}: {coords ? coords.longitude : 'Fetching...'}
+        </Text>
 
         <View style={styles.divider} />
 
@@ -118,13 +117,15 @@ export default function GPSAttendance() {
         </Text>
       </TouchableOpacity>
 
-      {/* Offline Sync Info */}
+      {/* Offline Info */}
       <View style={styles.syncBox}>
         <Text style={styles.syncText}>{t.syncInfo}</Text>
       </View>
     </View>
   );
 }
+
+/* ===================== STYLES ===================== */
 
 const styles = StyleSheet.create({
   container: {

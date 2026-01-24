@@ -33,8 +33,16 @@ export default function App() {
       );
 
       console.log('🧪 TABLES:', tables);
+      
       console.log('🧪 ATTENDANCES:', attendances);
 
+      const updates = await db.getAllAsync( 
+        "SELECT * FROM worker_updates;"
+
+      );
+      const workerUpdates = await db.getAllAsync(
+  'SELECT * FROM worker_updates ORDER BY created_at DESC'
+);
       startSyncEngine();
       console.log('🚀 Sync engine started');
     };
