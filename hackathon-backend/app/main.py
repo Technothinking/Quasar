@@ -1,4 +1,10 @@
 from fastapi import FastAPI
+from sqlalchemy import text
+
+from app.db.session import engine
+
+# Routers
+from app.api.v1.routes_auth import router as auth_router
 from app.api.v1.routes_projects import router as project_router
 from app.api.v1.routes_milestone import router as milestone_router
 from app.api.v1.routes_dpr import router as dpr_router
@@ -11,6 +17,24 @@ from app.api.v1.routes_image import router as image_router
 
 app = FastAPI(title="ConstructPro Backend")
 
+# -----------------------
+# Startup: DB health check
+# -----------------------
+@app.on_event("startup")
+def test_db_connection():
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        print("✅ Database connected successfully")
+    except Exception as e:
+        print("❌ Database connection failed")
+        print(e)
+        raise e
+
+# -----------------------
+# Routes
+# -----------------------
+app.include_router(auth_router)
 app.include_router(project_router)
 app.include_router(milestone_router)
 app.include_router(dpr_router)
@@ -21,6 +45,9 @@ app.include_router(attendance_router)
 app.include_router(project_site_router)
 app.include_router(image_router)
 
+# -----------------------
+# Health check
+# -----------------------
 @app.get("/")
-def health():
-    return {"status": "ok"}
+def root():
+    return {"status": "ConstructPro backend running"}
