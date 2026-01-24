@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,15 +8,14 @@ import {
   Modal,
   TextInput,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { supabase } from '../../lib/supabase';
 
 export default function ManagerHomeScreen({ navigation }) {
-  const [projects, setProjects] = useState([
-    { id: '1', name: 'Metro Line 4', area: 'Andheri East' },
-    { id: '2', name: 'Sky Tower', area: 'Lower Parel' },
-    { id: '3', name: 'Green Residency', area: 'Thane West' },
-  ]);
-
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
   const [name, setName] = useState('');
@@ -24,27 +23,80 @@ export default function ManagerHomeScreen({ navigation }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const addProject = () => {
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Fetch projects assigned to manager
+      const { data: roles, error: rolesError } = await supabase
+        .from('project_user_roles')
+        .select('project_id')
+        .eq('user_id', user.id);
+
+      if (rolesError) throw rolesError;
+
+      const projectIds = roles.map(r => r.project_id).filter(id => id != null);
+      if (projectIds.length === 0) {
+        setProjects([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .in('id', projectIds);
+
+      if (error) throw error;
+      setProjects(data);
+    } catch (err) {
+      Alert.alert('Error', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addProject = async () => {
     if (!name || !startDate || !endDate) {
-      alert('Please fill all required fields');
+      Alert.alert('Error', 'Please fill all required fields');
       return;
     }
 
-    const newProject = {
-      id: Date.now().toString(),
-      name,
-      area: 'New Project',
-      description,
-      startDate,
-      endDate,
-    };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
 
-    setProjects([newProject, ...projects]);
-    setShowModal(false);
-    setName('');
-    setDescription('');
-    setStartDate('');
-    setEndDate('');
+      const { data, error } = await supabase
+        .from('projects')
+        .insert([{
+          name,
+          owner_id: user.id,
+          start_date: startDate,
+          expected_end_date: endDate,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Link creator as manager
+      await supabase.from('project_user_roles').insert([
+        { project_id: data.id, user_id: user.id, role: 'manager' }
+      ]);
+
+      setProjects([data, ...projects]);
+      setShowModal(false);
+      setName('');
+      setDescription('');
+      setStartDate('');
+      setEndDate('');
+    } catch (err) {
+      Alert.alert('Creation Failed', err.message);
+    }
   };
 
   const renderItem = ({ item }) => (
@@ -59,7 +111,7 @@ export default function ManagerHomeScreen({ navigation }) {
 
       <View style={styles.locationRow}>
         <Text style={styles.locationIcon}>📍</Text>
-        <Text style={styles.area}>{item.area}</Text>
+        <Text style={styles.area}>{item.location || 'N/A'}</Text>
       </View>
     </TouchableOpacity>
   );

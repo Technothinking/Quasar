@@ -50,26 +50,38 @@ export default function DPRScreen({ route }) {
   const [issueNote, setIssueNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [supervisorName, setSupervisorName] = useState('Fetching...');
+  const [projectName, setProjectName] = useState('Fetching...');
 
   useEffect(() => {
-    fetchSupervisorProfile();
+    fetchDPRContext();
   }, []);
 
-  const fetchSupervisorProfile = async () => {
+  const fetchDPRContext = async () => {
     try {
+      // 1. Get supervisor name
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+        if (profile) setSupervisorName(profile.full_name);
+      }
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single();
-
-      if (data) setSupervisorName(data.full_name);
+      // 2. Get project name
+      if (projectId) {
+        const { data: project } = await supabase
+          .from('projects')
+          .select('name')
+          .eq('id', projectId)
+          .single();
+        if (project) setProjectName(project.name);
+      }
     } catch (err) {
-      console.error('Profile fetch failed:', err);
+      console.error('DPR context fetch failed:', err);
       setSupervisorName('Unknown');
+      setProjectName('Unknown');
     }
   };
 
@@ -137,7 +149,7 @@ export default function DPRScreen({ route }) {
 
       {/* Basic Info */}
       <View style={{ marginBottom: 10 }}>
-        <Text style={[styles.label, { marginTop: 0 }]}>Project ID: {projectId}</Text>
+        <Text style={[styles.label, { marginTop: 0 }]}>Project: {projectName}</Text>
         <Text style={[styles.label, { marginTop: 4 }]}>Submitted By: {supervisorName}</Text>
       </View>
 
