@@ -42,12 +42,29 @@ const translations = {
   },
 };
 
-export default function SupervisorLoginScreen({ navigation }) {
+import { useAuth } from '../../context/AuthContext';
+
+export default function SupervisorLoginScreen({ navigation, route }) {
   const { language } = useLanguage();
+  const { login, isLoading } = useAuth();
   const t = translations[language];
 
-  const [mobile, setMobile] = useState('');
-  const [password, setPassword] = useState('');
+  // Default to Supervisor if no param (fallback), but logic expects param
+  const { role_id = 3, role_name = 'Supervisor' } = route.params || {};
+
+  const [mobile, setMobile] = useState('supervisor@test.com'); // Temp Default
+  const [password, setPassword] = useState('supervisor123'); // Temp Default
+
+  const handleLogin = async () => {
+    // Using mobile as email based on backend requirement ("email": request.email)
+    // Adjust if backend expects phone number logic
+
+    const result = await login(mobile, password, role_id);
+    if (!result.success) {
+      alert(result.error);
+    }
+    // Navigation is handled by AppNavigator based on userToken state
+  };
 
   return (
     <View style={styles.container}>
@@ -57,18 +74,17 @@ export default function SupervisorLoginScreen({ navigation }) {
           <Text style={styles.logoEmoji}>🏗</Text>
         </View>
         <Text style={styles.appName}>{t.appName}</Text>
-        <Text style={styles.subtitle}>{t.subtitle}</Text>
+        <Text style={styles.subtitle}>{role_name} Login</Text>
       </View>
 
       {/* Form */}
       <View style={styles.form}>
-        <Text style={styles.label}>{t.mobileLabel}</Text>
+        <Text style={styles.label}>Email / {t.mobileLabel}</Text>
         <TextInput
           style={styles.input}
-          placeholder={t.mobilePlaceholder}
+          placeholder="Enter email or mobile"
           placeholderTextColor="#9CA3AF"
-          keyboardType="phone-pad"
-          maxLength={10}
+          autoCapitalize="none"
           value={mobile}
           onChangeText={setMobile}
         />
@@ -86,9 +102,19 @@ export default function SupervisorLoginScreen({ navigation }) {
         <TouchableOpacity
           style={styles.loginButton}
           activeOpacity={0.85}
-          onPress={() => navigation.replace('SupervisorHome')}
+          onPress={handleLogin}
+          disabled={isLoading}
         >
-          <Text style={styles.loginText}>{t.button}</Text>
+          <Text style={styles.loginText}>
+            {isLoading ? "Logging in..." : t.button}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{ marginTop: 20, alignItems: 'center' }}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={{ color: '#6B7280' }}>Back to Role Selection</Text>
         </TouchableOpacity>
       </View>
     </View>

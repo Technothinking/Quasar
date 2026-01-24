@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.db.session import engine
@@ -17,6 +18,17 @@ from app.api.v1.routes_image import router as image_router
 
 app = FastAPI(title="ConstructPro Backend")
 
+# CORS Configuration
+# ------------------
+# Required to allow the mobile app (running on a different IP/port) to access the backend.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins for development
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # -----------------------
 # Startup: DB health check
 # -----------------------
@@ -27,9 +39,9 @@ def test_db_connection():
             conn.execute(text("SELECT 1"))
         print("✅ Database connected successfully")
     except Exception as e:
-        print("❌ Database connection failed")
-        print(e)
-        raise e
+        print("⚠️  WARNING: Database connection failed - server will start anyway")
+        print(f"    Error: {e}")
+        print("    The /auth/login endpoint will fail until DB connectivity is restored.")
 
 # -----------------------
 # Routes

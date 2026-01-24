@@ -91,14 +91,18 @@ export default function RoleSelectionScreen({ navigation }) {
   const t = translations[language];
 
   const handleRolePress = (role) => {
+    // For now, routing everyone to SupervisorLogin or similar, 
+    // but passing the specific role_id so the backend can verify.
+    // 1=Owner, 2=Manager, 3=Supervisor, 4=Worker
+
     if (role === 'Owner') {
-      navigation.navigate('OwnerStack');
+      navigation.navigate('SupervisorLogin', { role_id: 1, role_name: 'Owner' });
     } else if (role === 'Manager') {
-      navigation.navigate('ManagerStack'); // add later
+      navigation.navigate('SupervisorLogin', { role_id: 2, role_name: 'Manager' });
     } else if (role === 'Supervisor') {
-      navigation.navigate('SupervisorStack'); // add later
+      navigation.navigate('SupervisorLogin', { role_id: 3, role_name: 'Supervisor' });
     } else if (role === 'Worker') {
-      navigation.navigate('WorkerStack'); // add later
+      navigation.navigate('SupervisorLogin', { role_id: 4, role_name: 'Worker' });
     }
   };
 

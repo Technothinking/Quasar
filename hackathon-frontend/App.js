@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { LanguageProvider } from './src/context/LanguageContext';
+import { AuthProvider } from './src/context/AuthContext';
 
 import { initDB, getDB } from './src/db/sqlite';
 import { startSyncEngine } from './src/db/syncEngine';
@@ -33,16 +34,16 @@ export default function App() {
       );
 
       console.log('🧪 TABLES:', tables);
-      
+
       console.log('🧪 ATTENDANCES:', attendances);
 
-      const updates = await db.getAllAsync( 
+      const updates = await db.getAllAsync(
         "SELECT * FROM worker_updates;"
 
       );
       const workerUpdates = await db.getAllAsync(
-  'SELECT * FROM worker_updates ORDER BY created_at DESC'
-);
+        'SELECT * FROM worker_updates ORDER BY created_at DESC'
+      );
       startSyncEngine();
       console.log('🚀 Sync engine started');
     };
@@ -52,9 +53,11 @@ export default function App() {
 
   return (
     <LanguageProvider>
-      <NavigationContainer>
-        <AppNavigator />
-      </NavigationContainer>
+      <AuthProvider>
+        <NavigationContainer>
+          <AppNavigator />
+        </NavigationContainer>
+      </AuthProvider>
     </LanguageProvider>
   );
 }
