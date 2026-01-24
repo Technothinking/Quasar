@@ -5,8 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
+  Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useLanguage } from '../../context/LanguageContext';
+import { saveWorkerUpdate } from '../../db/workerUpdates';
+import { getCurrentLocation } from '../../utils/location';
 
 /* 🌐 Translations */
 const translations = {
@@ -14,42 +19,83 @@ const translations = {
     title: 'Daily Work Update',
     subtitle: 'Submit details to finish your shift',
     workDone: 'Work done today',
-    location: 'Current location',
+    location: 'Current location / notes',
     photo: 'Upload work photo',
     submit: 'Finish Shift',
-  },
-  hi: {
-    title: 'दैनिक कार्य अपडेट',
-    subtitle: 'अपनी शिफ्ट पूरी करने के लिए विवरण दें',
-    workDone: 'आज किया गया काम',
-    location: 'वर्तमान स्थान',
-    photo: 'कार्य की फोटो अपलोड करें',
-    submit: 'शिफ्ट समाप्त करें',
-  },
-  mr: {
-    title: 'दैनिक काम अपडेट',
-    subtitle: 'शिफ्ट पूर्ण करण्यासाठी माहिती द्या',
-    workDone: 'आज केलेले काम',
-    location: 'सध्याचे स्थान',
-    photo: 'कामाचा फोटो अपलोड करा',
-    submit: 'शिफ्ट पूर्ण करा',
-  },
-  ta: {
-    title: 'தினசரி வேலை புதுப்பிப்பு',
-    subtitle: 'உங்கள் ஷிப்ட்டை முடிக்க விவரங்களை அளிக்கவும்',
-    workDone: 'இன்றைய வேலை',
-    location: 'தற்போதைய இடம்',
-    photo: 'வேலை புகைப்படத்தை பதிவேற்றவும்',
-    submit: 'ஷிப்ட் முடிக்கவும்',
   },
 };
 
 export default function VoiceUpdates() {
   const { language } = useLanguage();
-  const t = translations[language];
+  const t = translations[language] || translations.en;
 
   const [workDone, setWorkDone] = useState('');
-  const [location, setLocation] = useState('');
+  const [locationNote, setLocationNote] = useState('');
+  const [photoUri, setPhotoUri] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  /* 📸 Pick photo */
+  const pickPhoto = async () => {
+    const { status } =
+      await ImagePicker.requestCameraPermissionsAsync();
+
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Camera access needed');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 0.6,
+    });
+
+    if (!result.canceled) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  /* ✅ Submit */
+  const handleSubmit = async () => {
+    if (!workDone.trim()) {
+      Alert.alert('Error', 'Please enter work done');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      console.log('📍 Fetching GPS for worker update');
+      const { latitude, longitude } =
+        await getCurrentLocation();
+
+      await saveWorkerUpdate({
+        userId: 'WORKER_1', // temp
+        projectId: 1,       // temp
+        workDone,
+        locationNote,
+        latitude,
+        longitude,
+        photoUri,
+      });
+
+      console.log(
+        '✅ Worker update saved OFFLINE:',
+        latitude,
+        longitude,
+        photoUri
+      );
+
+      setWorkDone('');
+      setLocationNote('');
+      setPhotoUri(null);
+
+      Alert.alert('Success', 'Work update saved offline');
+    } catch (e) {
+      console.log('❌ Worker update error:', e.message);
+      Alert.alert('Error', e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -63,7 +109,7 @@ export default function VoiceUpdates() {
 
       <Text style={styles.subtitle}>{t.subtitle}</Text>
 
-      {/* Work Done Input */}
+      {/* Work Done */}
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
@@ -78,29 +124,44 @@ export default function VoiceUpdates() {
         </TouchableOpacity>
       </View>
 
-      {/* Location Input */}
+      {/* Location / Notes */}
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
           placeholder={t.location}
           placeholderTextColor="#9CA3AF"
-          value={location}
-          onChangeText={setLocation}
+          value={locationNote}
+          onChangeText={setLocationNote}
         />
         <TouchableOpacity style={styles.micBtn}>
           <Text style={styles.micIcon}>🎤</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Photo Upload */}
-      <TouchableOpacity style={styles.photoBox}>
+      {/* Photo */}
+      <TouchableOpacity style={styles.photoBox} onPress={pickPhoto}>
         <Text style={styles.photoIcon}>📷</Text>
-        <Text style={styles.photoText}>{t.photo}</Text>
+        <Text style={styles.photoText}>
+          {photoUri ? 'Change Photo' : t.photo}
+        </Text>
       </TouchableOpacity>
 
+      {photoUri && (
+        <Image source={{ uri: photoUri }} style={styles.preview} />
+      )}
+
       {/* Submit */}
-      <TouchableOpacity style={styles.submitBtn}>
-        <Text style={styles.submitText}>{t.submit}</Text>
+      <TouchableOpacity
+        style={[
+          styles.submitBtn,
+          { opacity: loading ? 0.6 : 1 },
+        ]}
+        onPress={handleSubmit}
+        disabled={loading}
+      >
+        <Text style={styles.submitText}>
+          {loading ? 'Saving...' : t.submit}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -167,7 +228,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: '#1F2937',
-    marginBottom: 24,
+    marginBottom: 12,
   },
   photoIcon: {
     fontSize: 22,
@@ -177,6 +238,13 @@ const styles = StyleSheet.create({
     color: '#E5E7EB',
     fontSize: 15,
     fontWeight: '600',
+  },
+
+  preview: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 20,
   },
 
   submitBtn: {

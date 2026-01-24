@@ -16,93 +16,83 @@ export const checkIn = async ({
 }) => {
   console.log('🔵 checkIn() START');
 
-  try {
-    const localId = Crypto.randomUUID();
-    const date = today();
-    const time = now();
+  const localId = Crypto.randomUUID();
+  const date = today();
+  const time = now();
 
-    await execute(
-      `INSERT INTO attendances (
-        local_id,
-        project_id,
-        user_id,
-        role,
-        date,
-        check_in_time,
-        method,
-        status,
-        created_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        localId,
-        projectId,
-        userId,
-        role,
-        date,
-        time,
-        method,
-        'present',
-        time,
-      ]
-    );
-
-    console.log('🟢 Supervisor attendance saved locally');
-
-    await addToOutbox('/attendance/check-in', 'POST', {
-      id: localId,
-      project_id: projectId,
-      user_id: userId,
+  await execute(
+    `INSERT INTO attendances (
+      local_id,
+      project_id,
+      user_id,
       role,
       date,
-      check_in_time: time,
+      check_in_time,
       method,
-      status: 'present',
-    });
+      status,
+      created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      localId,
+      projectId,
+      userId,
+      role,
+      date,
+      time,
+      method,
+      'present',
+      time,
+    ]
+  );
 
-    console.log('📥 Supervisor check-in queued');
+  console.log('🟢 Supervisor attendance saved locally');
 
-    return { offline: true };
-  } catch (e) {
-    console.log('🔴 ERROR in checkIn()', e);
-    throw e;
-  }
+  await addToOutbox('/attendance/check-in', 'POST', {
+    id: localId,
+    project_id: projectId,
+    user_id: userId,
+    role,
+    date,
+    check_in_time: time,
+    method,
+    status: 'present',
+  });
+
+  console.log('📥 Supervisor check-in queued');
+
+  return { offline: true };
 };
 
 /* ---------- CHECK OUT ---------- */
 export const checkOut = async ({ userId }) => {
   console.log('🔵 checkOut() START');
 
-  try {
-    const time = now();
-    const date = today();
+  const time = now();
+  const date = today();
 
-    await execute(
-      `UPDATE attendances
-       SET check_out_time = ?, updated_at = ?
-       WHERE user_id = ? AND date = ? AND role = 'supervisor'`,
-      [time, time, userId, date]
-    );
+  await execute(
+    `UPDATE attendances
+     SET check_out_time = ?, updated_at = ?
+     WHERE user_id = ? AND date = ? AND role = 'supervisor'`,
+    [time, time, userId, date]
+  );
 
-    console.log('🟢 Supervisor attendance updated locally');
+  console.log('🟢 Supervisor attendance updated locally');
 
-    await addToOutbox('/attendance/check-out', 'POST', {
-      user_id: userId,
-      date,
-      check_out_time: time,
-    });
+  await addToOutbox('/attendance/check-out', 'POST', {
+    user_id: userId,
+    date,
+    check_out_time: time,
+  });
 
-    console.log('📥 Supervisor check-out queued');
+  console.log('📥 Supervisor check-out queued');
 
-    return { offline: true };
-  } catch (e) {
-    console.log('🔴 ERROR in checkOut()', e);
-    throw e;
-  }
+  return { offline: true };
 };
 
 /* =========================================================
-   WORKER ATTENDANCE
+   WORKER GPS ATTENDANCE (OFFLINE)
    ========================================================= */
 
 export const workerToggleAttendance = async ({
@@ -112,11 +102,16 @@ export const workerToggleAttendance = async ({
   latitude,
   longitude,
 }) => {
-  console.log('🔵 workerToggleAttendance() START');
+  console.log(
+    '🔵 workerToggleAttendance() START',
+    latitude,
+    longitude
+  );
 
   const date = today();
   const time = now();
 
+  /* ---------- CHECK IN ---------- */
   if (isCheckIn) {
     const localId = Crypto.randomUUID();
 
@@ -128,11 +123,13 @@ export const workerToggleAttendance = async ({
         role,
         date,
         check_in_time,
+        latitude,
+        longitude,
         method,
         status,
         created_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         localId,
         projectId,
@@ -140,13 +137,15 @@ export const workerToggleAttendance = async ({
         'worker',
         date,
         time,
+        latitude,
+        longitude,
         'gps',
         'present',
         time,
       ]
     );
 
-    console.log('🟢 Worker check-in saved locally');
+    console.log('📍 WORKER SAVED LOCALLY:', latitude, longitude);
 
     await addToOutbox('/attendance/worker/check-in', 'POST', {
       id: localId,
@@ -161,7 +160,10 @@ export const workerToggleAttendance = async ({
     });
 
     console.log('📥 Worker check-in queued');
-  } else {
+  }
+
+  /* ---------- CHECK OUT ---------- */
+  else {
     await execute(
       `UPDATE attendances
        SET check_out_time = ?, updated_at = ?
@@ -184,7 +186,7 @@ export const workerToggleAttendance = async ({
 };
 
 /* =========================================================
-   READ (COMMON)
+   READ HELPERS
    ========================================================= */
 
 export const getTodayAttendance = async (userId) => {
