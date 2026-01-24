@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useLanguage } from '../../context/LanguageContext'; // Make sure your LanguageContext is set up
+import { supabase } from '../../lib/supabase';
 
 // 🔤 Translations
 const translations = {
@@ -48,6 +49,56 @@ export default function OwnerLoginScreen({ navigation }) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Email and password are required');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 1. Authenticate with Supabase first to get UUID
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        setLoading(false);
+        Alert.alert('Login Failed', error.message);
+        return;
+      }
+
+      // 2. Success! Now verify role in project_user_roles using the user's ID
+      const user = data.user;
+      const { data: roleData, error: roleError } = await supabase
+        .from('project_user_roles')
+        .select('role_id')
+        .eq('user_id', user.id)
+        .eq('role_id', 1) // Owner rank
+        .single();
+
+      if (roleError || !roleData) {
+        // If no match, sign out immediately
+        await supabase.auth.signOut();
+        setLoading(false);
+        Alert.alert('Unauthorized', 'Access denied. You do not have Owner privileges.');
+        return;
+      }
+
+      // 3. Authorized!
+      setLoading(false);
+      navigation.replace('OwnerHome');
+
+    } catch (err) {
+      setLoading(false);
+      Alert.alert('Error', 'Something went wrong. Check console.');
+      console.log(err);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -86,9 +137,10 @@ export default function OwnerLoginScreen({ navigation }) {
         <TouchableOpacity
           style={styles.loginButton}
           activeOpacity={0.85}
-          onPress={() => navigation.replace('OwnerHome')}
+          onPress={handleLogin}
+          disabled={loading}
         >
-          <Text style={styles.loginText}>{t.button}</Text>
+          <Text style={styles.loginText}>{loading ? 'Please wait...' : t.button}</Text>
         </TouchableOpacity>
       </View>
     </View>

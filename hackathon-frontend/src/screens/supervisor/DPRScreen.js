@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,84 +7,134 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { supabase } from '../../lib/supabase';
 
 import { saveDPR } from '../../db/dpr';
 
 const STAGES = [
-  'Excavation',
-  'Slab',
-  'Brickwork',
-  'Plumbing',
-  'Electrical',
-  'Painting',
-  'Finishing',
-  'Other',
+  { label: 'Excavation', value: 'excavation' },
+  { label: 'Slab', value: 'slab' },
+  { label: 'Brickwork', value: 'brickwork' },
+  { label: 'Plumbing', value: 'plumbing' },
+  { label: 'Electrical', value: 'electrical' },
+  { label: 'Painting', value: 'painting' },
+  { label: 'Finishing', value: 'finishing' },
+  { label: 'Other', value: 'other' },
 ];
 
 const WORK_STATUS = [
   { label: 'Work Completed', value: 'completed', icon: '✅' },
   { label: 'Partially Completed', value: 'partial', icon: '⚠️' },
-  { label: 'No Work', value: 'none', icon: '❌' },
+  { label: 'No Work', value: 'no_work', icon: '❌' },
 ];
 
 const ISSUES = [
-  'Material',
-  'Equipment',
-  'Water',
-  'Electricity',
-  'Labour',
-  'Weather',
-  'Approval',
-  'Payment',
-  'No issue',
+  { label: 'Material', value: 'material' },
+  { label: 'Equipment', value: 'equipment' },
+  { label: 'Water', value: 'water' },
+  { label: 'Electricity', value: 'electricity' },
+  { label: 'Labour', value: 'labour' },
+  { label: 'Weather', value: 'weather' },
+  { label: 'Approval', value: 'approval' },
+  { label: 'Payment', value: 'payment' },
 ];
 
-export default function DPRScreen() {
+export default function DPRScreen({ route }) {
+  const { projectId } = route.params || {};
+
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [stage, setStage] = useState('');
   const [otherNote, setOtherNote] = useState('');
   const [workStatus, setWorkStatus] = useState('');
   const [issues, setIssues] = useState([]);
   const [issueNote, setIssueNote] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [supervisorName, setSupervisorName] = useState('Fetching...');
+  const [projectName, setProjectName] = useState('Fetching...');
 
-  const toggleIssue = (item) => {
-    if (issues.includes(item)) {
-      setIssues(issues.filter(i => i !== item));
+  useEffect(() => {
+    fetchDPRContext();
+  }, []);
+
+  const fetchDPRContext = async () => {
+    try {
+      // 1. Get supervisor name
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+        if (profile) setSupervisorName(profile.full_name);
+      }
+
+      // 2. Get project name
+      if (projectId) {
+        const { data: project } = await supabase
+          .from('projects')
+          .select('name')
+          .eq('id', projectId)
+          .single();
+        if (project) setProjectName(project.name);
+      }
+    } catch (err) {
+      console.error('DPR context fetch failed:', err);
+      setSupervisorName('Unknown');
+      setProjectName('Unknown');
+    }
+  };
+
+
+  const toggleIssue = (val) => {
+    if (issues.includes(val)) {
+      setIssues(issues.filter(i => i !== val));
     } else {
-      setIssues([...issues, item]);
+      setIssues([...issues, val]);
     }
   };
 
   const handleSubmit = async () => {
-    console.log('🟣 DPR SUBMIT CLICKED');
-
     if (!stage || !workStatus) {
-      Alert.alert('Error', 'Stage of work and work status are mandatory.');
+      Alert.alert('Error', 'Please select a Stage and Work Status.');
       return;
     }
 
+    setLoading(true);
+
     try {
-      await saveDPR({
-        projectId: 1,
-        userId: 'SUPERVISOR_1',
-        stage,
-        otherNote,
-        workStatus,
-        issues,
-        issueNote,
-      });
+      const { data, error } = await supabase
+        .from('daily_dprs')
+        .insert([
+          {
+            project_id: projectId,
+            date: date,
+            active_stage: stage,
+            work_status: workStatus,
+            issues: issues,
+            issue_note: issueNote,
+            submitted_by: supervisorName,
+          },
+        ]);
 
-      Alert.alert('Success', 'DPR saved offline and queued for sync');
+      if (error) throw error;
 
-      // Reset form
+      Alert.alert('Success', 'DPR Saved Successfully');
+
+      // Reset form (except project)
       setStage('');
       setOtherNote('');
       setWorkStatus('');
       setIssues([]);
       setIssueNote('');
+
     } catch (err) {
-      console.log('❌ DPR SAVE FAILED', err);
-      Alert.alert('Error', 'Failed to save DPR');
+      Alert.alert('Submission Failed', err.message);
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -100,24 +149,39 @@ export default function DPRScreen() {
         <Text style={styles.heading}>Daily Progress Report</Text>
       </View>
 
+      {/* Basic Info */}
+      <View style={{ marginBottom: 10 }}>
+        <Text style={[styles.label, { marginTop: 0 }]}>Project: {projectName}</Text>
+        <Text style={[styles.label, { marginTop: 4 }]}>Submitted By: {supervisorName}</Text>
+      </View>
+
+      <Text style={styles.label}>Report Date (YYYY-MM-DD) *</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="2024-01-25"
+        placeholderTextColor="#9CA3AF"
+        value={date}
+        onChangeText={setDate}
+      />
+
       {/* Stage of Work */}
       <Text style={styles.label}>Active Stage Today *</Text>
       <View style={styles.optionGrid}>
         {STAGES.map(item => (
           <TouchableOpacity
-            key={item}
+            key={item.value}
             style={[
               styles.optionChip,
-              stage === item && styles.optionActive,
+              stage === item.value && styles.optionActive,
             ]}
-            onPress={() => setStage(item)}
+            onPress={() => setStage(item.value)}
           >
-            <Text style={styles.optionText}>{item}</Text>
+            <Text style={styles.optionText}>{item.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {stage === 'Other' && (
+      {stage === 'other' && (
         <TextInput
           style={styles.input}
           placeholder="Optional note for Other stage"
@@ -149,14 +213,14 @@ export default function DPRScreen() {
       <View style={styles.optionGrid}>
         {ISSUES.map(item => (
           <TouchableOpacity
-            key={item}
+            key={item.value}
             style={[
               styles.optionChip,
-              issues.includes(item) && styles.optionActive,
+              issues.includes(item.value) && styles.optionActive,
             ]}
-            onPress={() => toggleIssue(item)}
+            onPress={() => toggleIssue(item.value)}
           >
-            <Text style={styles.optionText}>{item}</Text>
+            <Text style={styles.optionText}>{item.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -170,8 +234,12 @@ export default function DPRScreen() {
       />
 
       {/* Submit */}
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Save DPR</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && { opacity: 0.7 }]}
+        onPress={handleSubmit}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Save DPR'}</Text>
       </TouchableOpacity>
 
       <Text style={styles.info}>

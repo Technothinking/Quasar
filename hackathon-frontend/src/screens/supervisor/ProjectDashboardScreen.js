@@ -34,7 +34,7 @@ export default function ProjectDashboardScreen({ route, navigation }) {
       <View style={styles.header}>
         <View>
           <Text style={styles.projectName}>{project.name}</Text>
-          <Text style={styles.area}>📍 {project.area}</Text>
+          <Text style={styles.area}>Project ID: {project.id}</Text>
         </View>
         <View style={styles.logoBox}>
           <Text style={styles.logoEmoji}>🏗</Text>
@@ -50,7 +50,7 @@ export default function ProjectDashboardScreen({ route, navigation }) {
           <TouchableOpacity
             key={index}
             style={styles.card}
-            onPress={() => navigation.navigate(item.screen)}
+            onPress={() => navigation.navigate(item.screen, { projectId: project.id })}
           >
             <Text style={styles.icon}>{item.icon}</Text>
             <Text style={styles.text}>{item.title}</Text>

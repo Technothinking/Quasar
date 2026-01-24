@@ -28,11 +28,10 @@ export default function ManagerProjectDashboardScreen({ route, navigation }) {
       contentContainerStyle={{ paddingBottom: 30 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.projectName}>{project.name}</Text>
-          <Text style={styles.area}>📍 {project.area}</Text>
+          <Text style={styles.area}>Project ID: {project.id}</Text>
         </View>
 
         <View style={styles.logoBox}>
@@ -47,7 +46,7 @@ export default function ManagerProjectDashboardScreen({ route, navigation }) {
             key={index}
             style={styles.card}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate(item.screen, { project })}
+            onPress={() => navigation.navigate(item.screen, { projectId: project.id, projectName: project.name })}
           >
             <Text style={styles.icon}>{item.icon}</Text>
             <Text style={styles.text}>{item.title}</Text>

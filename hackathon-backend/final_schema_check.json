@@ -1,0 +1,24 @@
+{
+  "daily_dprs": [
+    "id",
+    "project_id",
+    "date",
+    "active_stage",
+    "work_status",
+    "issues",
+    "issue_note",
+    "submitted_by",
+    "submitted_at"
+  ],
+  "material_requests": "EMPTY",
+  "profiles": [
+    "id",
+    "full_name",
+    "created_at"
+  ],
+  "projects": [
+    "id",
+    "name",
+    "created_at"
+  ]
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,46 +6,140 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { supabase } from '../../lib/supabase';
 
-export default function MaterialScreen() {
-  const [materials, setMaterials] = useState([
-    { id: '1', name: 'Cement', quantity: '50', unit: 'Bags' },
-    { id: '2', name: 'Bricks', quantity: '500', unit: 'Nos' },
-    { id: '3', name: 'Steel Rods', quantity: '100', unit: 'Kg' },
-  ]);
+export default function MaterialScreen({ route }) {
+  const { projectId } = route.params || {};
 
+  const [materials, setMaterials] = useState([]);
   const [newMaterial, setNewMaterial] = useState('');
   const [newQuantity, setNewQuantity] = useState('');
   const [newUnit, setNewUnit] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [supervisorName, setSupervisorName] = useState('...');
+  const [projectName, setProjectName] = useState('...');
 
-  const handleAddMaterial = () => {
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const loadInitialData = async () => {
+    try {
+      setFetching(true);
+      await Promise.all([
+        fetchIdentity(),
+        fetchProjectInfo(),
+        fetchRequests(),
+      ]);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  const fetchIdentity = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (data) setSupervisorName(data.full_name);
+    } catch (err) {
+      console.error('Identity fetch failed:', err);
+    }
+  };
+
+  const fetchProjectInfo = async () => {
+    if (!projectId) return;
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('name')
+        .eq('id', projectId)
+        .single();
+
+      if (data) setProjectName(data.name);
+    } catch (err) {
+      console.error('Project info fetch failed:', err);
+    }
+  };
+
+  const fetchRequests = async () => {
+    if (!projectId) return;
+    try {
+      const { data, error } = await supabase
+        .from('material_requests')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) setMaterials(data);
+    } catch (err) {
+      console.error('Requests fetch failed:', err);
+    }
+  };
+
+  const handleAddMaterial = async () => {
     if (!newMaterial || !newQuantity || !newUnit) {
-      alert('Please fill all fields!');
+      Alert.alert('Error', 'Please fill all fields!');
       return;
     }
 
-    const newItem = {
-      id: Date.now().toString(),
-      name: newMaterial,
-      quantity: newQuantity,
-      unit: newUnit,
-    };
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('material_requests')
+        .insert([{
+          project_id: projectId,
+          Project_name: projectName,
+          material_name: newMaterial,
+          unit: newUnit,
+          quantity_requested: parseFloat(newQuantity),
+          submitted: supervisorName,
+          status: 'pending'
+        }]);
 
-    setMaterials([newItem, ...materials]);
-    setNewMaterial('');
-    setNewQuantity('');
-    setNewUnit('');
+      if (error) throw error;
+
+      Alert.alert('Success', 'Material request submitted!');
+      setNewMaterial('');
+      setNewQuantity('');
+      setNewUnit('');
+      fetchRequests(); // Refresh list
+    } catch (err) {
+      Alert.alert('Submission Failed', err.message);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Text style={styles.cardText}>{item.name}</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Text style={styles.cardText}>{item.material_name}</Text>
+        <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+          {item.status.toUpperCase()}
+        </Text>
+      </View>
       <Text style={styles.cardQuantity}>
-        {item.quantity} {item.unit}
+        {item.quantity_requested} {item.unit}
       </Text>
     </View>
   );
+
+  const getStatusColor = (status) => {
+    if (status === 'approved') return '#22C55E';
+    if (status === 'rejected') return '#EF4444';
+    return '#F4B400';
+  };
 
   const ListHeader = () => (
     <View>
@@ -54,7 +148,10 @@ export default function MaterialScreen() {
         <View style={styles.logoBox}>
           <Text style={styles.logoEmoji}>🏗</Text>
         </View>
-        <Text style={styles.heading}>Material Requests</Text>
+        <View>
+          <Text style={styles.heading}>Material Requests</Text>
+          <Text style={{ color: '#9CA3AF', fontSize: 12 }}>Project: {projectName}</Text>
+        </View>
       </View>
 
       {/* Form */}
@@ -94,11 +191,20 @@ export default function MaterialScreen() {
     </View>
   );
 
+  if (fetching) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#F4B400" />
+        <Text style={{ color: 'white', marginTop: 10 }}>Loading Material Data...</Text>
+      </View>
+    );
+  }
+
   return (
     <FlatList
       style={{ backgroundColor: '#0B0F14' }}
       data={materials}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => item.id?.toString()}
       renderItem={renderItem}
       ListHeaderComponent={ListHeader}
       contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
@@ -107,6 +213,10 @@ export default function MaterialScreen() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0B0F14',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -168,6 +278,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
   cardQuantity: {
     color: '#9CA3AF',

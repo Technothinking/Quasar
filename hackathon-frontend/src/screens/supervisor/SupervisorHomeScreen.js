@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useLanguage } from '../../context/LanguageContext';
+import { supabase } from '../../lib/supabase';
 
 /* 🌐 Translations (UI ONLY) */
 const translations = {
@@ -28,17 +31,56 @@ const translations = {
   },
 };
 
-/* 🔌 Backend / Offline Cached Data (DO NOT TRANSLATE) */
-const projects = [
-  { id: '1', name: 'Metro Line 4', area: 'Andheri East' },
-  { id: '2', name: 'Sky Tower', area: 'Lower Parel' },
-  { id: '3', name: 'Green Residency', area: 'Thane West' },
-  { id: '4', name: 'Highway Expansion', area: 'Panvel' },
-];
-
 export default function SupervisorHomeScreen({ navigation }) {
   const { language } = useLanguage();
   const t = translations[language];
+
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+
+      // 1. Get current user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new Error('Not authenticated');
+
+      // 2. Get project IDs assigned to this user from project_user_roles
+      const { data: roles, error: rolesError } = await supabase
+        .from('project_user_roles')
+        .select('project_id')
+        .eq('user_id', user.id);
+
+      if (rolesError) throw rolesError;
+
+      const projectIds = roles.map(r => r.project_id).filter(id => id != null);
+
+      if (projectIds.length === 0) {
+        setProjects([]);
+        return;
+      }
+
+      // 3. Fetch project details
+      const { data: projectList, error: projectError } = await supabase
+        .from('projects')
+        .select('id, name')
+        .in('id', projectIds);
+
+      if (projectError) throw projectError;
+
+      setProjects(projectList);
+    } catch (err) {
+      Alert.alert('Error', 'Failed to load projects: ' + err.message);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
@@ -52,7 +94,7 @@ export default function SupervisorHomeScreen({ navigation }) {
 
       <View style={styles.locationRow}>
         <Text style={styles.locationIcon}>📍</Text>
-        <Text style={styles.area}>{item.area}</Text>
+        <Text style={styles.area}>Internal Project ID: {item.id}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -72,13 +114,17 @@ export default function SupervisorHomeScreen({ navigation }) {
       </View>
 
       {/* Project List */}
-      <FlatList
-        data={projects}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 30 }}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#F4B400" style={{ marginTop: 50 }} />
+      ) : (
+        <FlatList
+          data={projects}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 30 }}
+        />
+      )}
     </View>
   );
 }

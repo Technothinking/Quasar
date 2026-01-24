@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useLanguage } from '../../context/LanguageContext'; // Make sure you have this
+import { supabase } from '../../lib/supabase';
 
 // 🔤 Translations
 const translations = {
   en: {
     appName: 'ConstructPro',
     subtitle: 'Supervisor Login',
-    mobileLabel: 'Mobile Number',
-    mobilePlaceholder: 'Enter mobile number',
+    emailLabel: 'Email',
+    emailPlaceholder: 'Enter your email',
     passwordLabel: 'Password',
     passwordPlaceholder: 'Enter password',
     button: 'Login',
@@ -16,8 +17,8 @@ const translations = {
   hi: {
     appName: 'कंस्ट्रक्टप्रो',
     subtitle: 'सुपरवाइज़र लॉगिन',
-    mobileLabel: 'मोबाइल नंबर',
-    mobilePlaceholder: 'मोबाइल नंबर दर्ज करें',
+    emailLabel: 'ईमेल',
+    emailPlaceholder: 'ईमेल दर्ज करें',
     passwordLabel: 'पासवर्ड',
     passwordPlaceholder: 'पासवर्ड दर्ज करें',
     button: 'लॉगिन करें',
@@ -25,8 +26,8 @@ const translations = {
   mr: {
     appName: 'कन्स्ट्रक्टप्रो',
     subtitle: 'सुपरवायझर लॉगिन',
-    mobileLabel: 'मोबाईल नंबर',
-    mobilePlaceholder: 'मोबाईल नंबर टाका',
+    emailLabel: 'ईमेल',
+    emailPlaceholder: 'ईमेल टाका',
     passwordLabel: 'पासवर्ड',
     passwordPlaceholder: 'पासवर्ड टाका',
     button: 'लॉगिन करा',
@@ -34,8 +35,8 @@ const translations = {
   ta: {
     appName: 'கன்ஸ்ட்ரக்ட் ப்ரோ',
     subtitle: 'மேற்பார்வையாளர் லாகின்',
-    mobileLabel: 'மொபைல் எண்',
-    mobilePlaceholder: 'மொபைல் எண்ணை உள்ளிடவும்',
+    emailLabel: 'மின்னஞ்சல்',
+    emailPlaceholder: 'மின்னஞ்சலை உள்ளிடவும்',
     passwordLabel: 'கடவுச்சொல்',
     passwordPlaceholder: 'கடவுச்சொல்லை உள்ளிடவும்',
     button: 'ப்ரோ வுச்செய்',
@@ -49,21 +50,57 @@ export default function SupervisorLoginScreen({ navigation, route }) {
   const { login, isLoading } = useAuth();
   const t = translations[language];
 
-  // Default to Supervisor if no param (fallback), but logic expects param
-  const { role_id = 3, role_name = 'Supervisor' } = route.params || {};
-
-  const [mobile, setMobile] = useState('supervisor@test.com'); // Temp Default
-  const [password, setPassword] = useState('supervisor123'); // Temp Default
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    // Using mobile as email based on backend requirement ("email": request.email)
-    // Adjust if backend expects phone number logic
-
-    const result = await login(mobile, password, role_id);
-    if (!result.success) {
-      alert(result.error);
+    if (!email || !password) {
+      Alert.alert('Error', 'Email and password are required');
+      return;
     }
-    // Navigation is handled by AppNavigator based on userToken state
+
+    setLoading(true);
+
+    try {
+      // 1. Authenticate with Supabase first to get UUID
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        setLoading(false);
+        Alert.alert('Login Failed', error.message);
+        return;
+      }
+
+      // 2. Success! Now verify role in project_user_roles using the user's ID
+      const user = data.user;
+      const { data: roleData, error: roleError } = await supabase
+        .from('project_user_roles')
+        .select('role_id')
+        .eq('user_id', user.id)
+        .eq('role_id', 3) // Supervisor rank
+        .single();
+
+      if (roleError || !roleData) {
+        // If no match, sign out immediately
+        await supabase.auth.signOut();
+        setLoading(false);
+        Alert.alert('Unauthorized', 'Access denied. You do not have Supervisor privileges.');
+        return;
+      }
+
+      // 3. Authorized!
+      setLoading(false);
+      navigation.replace('SupervisorHome');
+
+    } catch (err) {
+      setLoading(false);
+      Alert.alert('Error', 'Something went wrong. Check console.');
+      console.log(err);
+    }
   };
 
   return (
@@ -79,14 +116,15 @@ export default function SupervisorLoginScreen({ navigation, route }) {
 
       {/* Form */}
       <View style={styles.form}>
-        <Text style={styles.label}>Email / {t.mobileLabel}</Text>
+        <Text style={styles.label}>{t.emailLabel}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter email or mobile"
+          placeholder={t.emailPlaceholder}
           placeholderTextColor="#9CA3AF"
+          keyboardType="email-address"
           autoCapitalize="none"
-          value={mobile}
-          onChangeText={setMobile}
+          value={email}
+          onChangeText={setEmail}
         />
 
         <Text style={styles.label}>{t.passwordLabel}</Text>
@@ -103,18 +141,9 @@ export default function SupervisorLoginScreen({ navigation, route }) {
           style={styles.loginButton}
           activeOpacity={0.85}
           onPress={handleLogin}
-          disabled={isLoading}
+          disabled={loading}
         >
-          <Text style={styles.loginText}>
-            {isLoading ? "Logging in..." : t.button}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={{ marginTop: 20, alignItems: 'center' }}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={{ color: '#6B7280' }}>Back to Role Selection</Text>
+          <Text style={styles.loginText}>{loading ? 'Please wait...' : t.button}</Text>
         </TouchableOpacity>
       </View>
     </View>

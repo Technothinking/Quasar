@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,93 +6,113 @@ import {
   TouchableOpacity,
   FlatList,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { supabase } from '../../lib/supabase';
 
-const initialRequests = [
-  {
-    id: '1',
-    material: 'Cement',
-    quantity: '50 Bags',
-    requestedBy: 'Supervisor – Block A',
-    status: 'pending',
-  },
-  {
-    id: '2',
-    material: 'Steel Rods',
-    quantity: '100 Kg',
-    requestedBy: 'Supervisor – Block B',
-    status: 'pending',
-  },
-  {
-    id: '3',
-    material: 'Bricks',
-    quantity: '500',
-    requestedBy: 'Supervisor – Block C',
-    status: 'pending',
-  },
-];
+export default function MaterialApprovalScreen({ route }) {
+  const { projectId, projectName } = route.params || {};
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null); // Track which item is being updated
 
-export default function MaterialApprovalScreen() {
-  const [requests, setRequests] = useState(initialRequests);
+  useEffect(() => {
+    fetchRequests();
+  }, [projectId]);
 
-  const updateStatus = (id, newStatus) => {
-    const updated = requests.map((item) =>
-      item.id === id ? { ...item, status: newStatus } : item
-    );
-    setRequests(updated);
+  const fetchRequests = async () => {
+    if (!projectId) return;
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('material_requests')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
 
-    console.log({
-      requestId: id,
-      status: newStatus,
-      synced: false, // offline-first
-    });
+      if (error) throw error;
+      setRequests(data || []);
+    } catch (err) {
+      Alert.alert('Error', 'Failed to fetch requests: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    Alert.alert(
-      'Saved Offline',
-      `Material request ${newStatus.toUpperCase()}. Will sync when online.`
-    );
+  const updateStatus = async (id, newStatus) => {
+    try {
+      setActionLoading(id);
+      const { error } = await supabase
+        .from('material_requests')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setRequests(prev => prev.map(item =>
+        item.id === id ? { ...item, status: newStatus } : item
+      ));
+
+      Alert.alert('Success', `Request ${newStatus} successfully.`);
+    } catch (err) {
+      Alert.alert('Update Failed', err.message);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <View style={styles.row}>
-        <Text style={styles.material}>{item.material}</Text>
+        <Text style={styles.material}>{item.material_name}</Text>
         <Text
           style={[
             styles.status,
             item.status === 'approved'
               ? styles.approved
               : item.status === 'rejected'
-              ? styles.rejected
-              : styles.pending,
+                ? styles.rejected
+                : styles.pending,
           ]}
         >
           {item.status.toUpperCase()}
         </Text>
       </View>
 
-      <Text style={styles.quantity}>Quantity: {item.quantity}</Text>
-      <Text style={styles.requestedBy}>{item.requestedBy}</Text>
+      <Text style={styles.quantity}>Quantity: {item.quantity_requested} {item.unit}</Text>
+      <Text style={styles.requestedBy}>Requested By: {item.submitted}</Text>
 
       {item.status === 'pending' && (
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={[styles.actionButton, styles.approveBtn]}
             onPress={() => updateStatus(item.id, 'approved')}
+            disabled={actionLoading === item.id}
           >
-            <Text style={styles.actionText}>APPROVE</Text>
+            <Text style={styles.actionText}>{actionLoading === item.id ? '...' : 'APPROVE'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.actionButton, styles.rejectBtn]}
             onPress={() => updateStatus(item.id, 'rejected')}
+            disabled={actionLoading === item.id}
           >
-            <Text style={styles.actionText}>REJECT</Text>
+            <Text style={styles.actionText}>{actionLoading === item.id ? '...' : 'REJECT'}</Text>
           </TouchableOpacity>
         </View>
       )}
     </View>
   );
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#F4B400" />
+        <Text style={{ color: 'white', marginTop: 10 }}>Loading Requests...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -101,7 +121,7 @@ export default function MaterialApprovalScreen() {
         <View>
           <Text style={styles.heading}>Material Approvals</Text>
           <Text style={styles.subHeading}>
-            Review supervisor material requests
+            Project: {projectName || '...'}
           </Text>
         </View>
 
@@ -113,18 +133,11 @@ export default function MaterialApprovalScreen() {
       {/* List */}
       <FlatList
         data={requests}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id?.toString()}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 30 }}
       />
-
-      {/* Offline Info */}
-      <View style={styles.infoBox}>
-        <Text style={styles.infoText}>
-          🔄 Works offline — approvals sync automatically
-        </Text>
-      </View>
     </View>
   );
 }
