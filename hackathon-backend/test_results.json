@@ -1,0 +1,46 @@
+[
+  {
+    "field": "active_stage",
+    "value": "Excavation",
+    "status": "FAIL",
+    "error": "{'message': 'invalid input value for enum active_stage_enum: \"Excavation\"', 'code': '22P02', 'hint': None, 'details': None}"
+  },
+  {
+    "field": "active_stage",
+    "value": "excavation",
+    "status": "FAIL",
+    "error": "{'message': 'malformed array literal: \"None\"', 'code': '22P02', 'hint': None, 'details': 'Array value must start with \"{\" or dimension information.'}"
+  },
+  {
+    "field": "work_status",
+    "value": "Work Completed",
+    "status": "FAIL",
+    "error": "{'message': 'invalid input value for enum active_stage_enum: \"Excavation\"', 'code': '22P02', 'hint': None, 'details': None}"
+  },
+  {
+    "field": "work_status",
+    "value": "completed",
+    "status": "FAIL",
+    "error": "{'message': 'invalid input value for enum active_stage_enum: \"Excavation\"', 'code': '22P02', 'hint': None, 'details': None}"
+  },
+  {
+    "field": "issues",
+    "value": "Material",
+    "status": "FAIL",
+    "error": "{'message': 'invalid input value for enum active_stage_enum: \"Excavation\"', 'code': '22P02', 'hint': None, 'details': None}"
+  },
+  {
+    "field": "issues",
+    "value": [
+      "Material"
+    ],
+    "status": "FAIL",
+    "error": "{'message': 'invalid input value for enum active_stage_enum: \"Excavation\"', 'code': '22P02', 'hint': None, 'details': None}"
+  },
+  {
+    "field": "issues",
+    "value": "{Material}",
+    "status": "FAIL",
+    "error": "{'message': 'invalid input value for enum active_stage_enum: \"Excavation\"', 'code': '22P02', 'hint': None, 'details': None}"
+  }
+]
