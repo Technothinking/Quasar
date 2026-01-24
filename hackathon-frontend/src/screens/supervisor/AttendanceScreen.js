@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +5,10 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import { useEffect, useState } from 'react';
+import { addAttendanceEvent, getAttendanceByDate } from '../../db/attendance';
+import { today, now } from '../../utils/time';
+
 
 const workersData = [
   { id: 1, name: 'Rahul Sharma' },
@@ -16,16 +19,41 @@ const workersData = [
 ];
 
 export default function AttendanceScreen() {
-  const [attendance, setAttendance] = useState({});
+  const [attendanceMap, setAttendanceMap] = useState({});
+  const siteId = 'SITE_1';
 
-  const setStatus = (id, status) => {
-    setAttendance({ ...attendance, [id]: status });
+  useEffect(() => {
+    loadAttendance();
+  }, []);
+
+  const loadAttendance = async () => {
+    const rows = await getAttendanceByDate(siteId, today());
+
+    const map = {};
+    rows.forEach(r => {
+      map[r.worker_id] = r.event_type;
+    });
+
+    setAttendanceMap(map);
+  };
+
+
+  const setStatus = async (workerId, status) => {
+    await addAttendanceEvent({
+      siteId,
+      workerId,
+      eventType: status,
+      attendanceDate: today(),
+      timestamp: now(),
+    });
+
+    loadAttendance();
   };
 
   const handleSubmit = () => {
-    console.log('Attendance Submitted:', attendance);
-    alert('Attendance Submitted!');
+    alert('Attendance saved offline ✅ Will sync automatically');
   };
+
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -46,7 +74,7 @@ export default function AttendanceScreen() {
             <TouchableOpacity
               style={[
                 styles.statusButton,
-                attendance[worker.id] === 'Present' && styles.present,
+                attendanceMap[worker.id] === 'Present' && styles.present,
               ]}
               onPress={() => setStatus(worker.id, 'Present')}
             >
@@ -56,7 +84,7 @@ export default function AttendanceScreen() {
             <TouchableOpacity
               style={[
                 styles.statusButton,
-                attendance[worker.id] === 'Absent' && styles.absent,
+                attendanceMap[worker.id] === 'Absent' && styles.absent,
               ]}
               onPress={() => setStatus(worker.id, 'Absent')}
             >
@@ -66,7 +94,7 @@ export default function AttendanceScreen() {
             <TouchableOpacity
               style={[
                 styles.statusButton,
-                attendance[worker.id] === 'Half-Day' && styles.halfDay,
+                attendanceMap[worker.id] === 'Half-Day' && styles.halfDay,
               ]}
               onPress={() => setStatus(worker.id, 'Half-Day')}
             >

@@ -7,6 +7,12 @@ import {
   ScrollView,
 } from 'react-native';
 
+const fetchOfflineDPRs = async () => {
+  const dprs = await OfflineDB.getRecords('daily_dprs', 'sync_status = ?', ['pending']);
+  console.log(dprs);
+  return dprs;
+};
+
 export default function ProjectDashboardScreen({ route, navigation }) {
   const { project } = route.params;
 
