@@ -15,6 +15,8 @@ import StockUpdateScreen from '../screens/supervisor/StockUpdateScreen';
 import CheckInOutScreen from '../screens/supervisor/CheckInOutScreen';
 import TaskAssign from '../screens/supervisor/TaskAssign';
 import StockVerificationScreen from '../screens/supervisor/StockVerificationScreen';
+import CostEstimates from '../screens/supervisor/CostEstimates';
+import ToolLibraryScreen from '../screens/supervisor/ToolLibraryScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -50,6 +52,8 @@ export default function SupervisorStack() {
       <Stack.Screen name="CheckInOut" component={CheckInOutScreen} />
       <Stack.Screen name="TaskAssign" component={TaskAssign} />
       <Stack.Screen name="StockVerification" component={StockVerificationScreen} />
+      <Stack.Screen name="CostEstimates" component={CostEstimates} />
+      <Stack.Screen name="ToolLibrary" component={ToolLibraryScreen} options={{ title: 'Tool Library' }} />
 
 
     </Stack.Navigator>

@@ -27,6 +27,8 @@ export default function ProjectDashboardScreen({ route, navigation }) {
     { title: 'CheckIn/Out', screen: 'CheckInOut', icon: '⏰' },
     { title: 'Task Assign', screen: 'TaskAssign', icon: '✅' },
     { title: 'Stock Verification', screen: 'StockVerification', icon: '🔍' },
+    { title: 'Cost Estimates', screen: 'CostEstimates', icon: '💰' },
+    { title: 'Tool Library', screen: 'ToolLibrary', icon: '🛠' },
   ];
 
   return (
