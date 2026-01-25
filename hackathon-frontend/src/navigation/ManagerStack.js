@@ -9,13 +9,14 @@ import TaskAssignmentScreen from '../screens/manager/TaskAssignmentScreen';
 import StockTrackingScreen from '../screens/manager/StockTrackingScreen';
 import GSTInvoices from '../screens/manager/GSTInvoices';
 import DPRViewScreen from '../screens/manager/DPRViewScreen';
+import StockVerificationScreen from '../screens/supervisor/StockVerificationScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function ManagerStack() {
   return (
     <Stack.Navigator>
-      
+
       {/* Manager Login */}
       <Stack.Screen
         name="ManagerLogin"
@@ -71,7 +72,13 @@ export default function ManagerStack() {
         component={DPRViewScreen}
         options={{ title: 'View DPRs' }}
       />
-      
+
+      <Stack.Screen
+        name="StockVerification"
+        component={StockVerificationScreen}
+        options={{ title: 'Stock Verification' }}
+      />
+
     </Stack.Navigator>
   );
 }

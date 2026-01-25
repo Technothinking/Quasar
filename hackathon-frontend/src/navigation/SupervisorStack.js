@@ -15,6 +15,7 @@ import StockUpdateScreen from '../screens/supervisor/StockUpdateScreen';
 import GSTInvoices from '../screens/supervisor/GSTInvoices';
 import CheckInOutScreen from '../screens/supervisor/CheckInOutScreen';
 import TaskAssign from '../screens/supervisor/TaskAssign';
+import StockVerificationScreen from '../screens/supervisor/StockVerificationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -50,6 +51,7 @@ export default function SupervisorStack() {
       <Stack.Screen name="GSTInvoices" component={GSTInvoices} />
       <Stack.Screen name="CheckInOut" component={CheckInOutScreen} />
       <Stack.Screen name="TaskAssign" component={TaskAssign} />
+      <Stack.Screen name="StockVerification" component={StockVerificationScreen} />
 
 
     </Stack.Navigator>

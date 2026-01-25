@@ -12,7 +12,8 @@ import {
 import { supabase } from '../../lib/supabase';
 
 export default function MaterialScreen({ route }) {
-  const { projectId } = route.params || {};
+  const { project } = route.params || {};
+  const projectId = project?.id;
 
   const [materials, setMaterials] = useState([]);
   const [newMaterial, setNewMaterial] = useState('');
@@ -125,9 +126,11 @@ export default function MaterialScreen({ route }) {
     <View style={styles.card}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <Text style={styles.cardText}>{item.material_name}</Text>
-        <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-          {item.status.toUpperCase()}
-        </Text>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '22' }]}>
+          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+            {item.status.replace('_', ' ').toUpperCase()}
+          </Text>
+        </View>
       </View>
       <Text style={styles.cardQuantity}>
         {item.quantity_requested} {item.unit}
@@ -137,6 +140,7 @@ export default function MaterialScreen({ route }) {
 
   const getStatusColor = (status) => {
     if (status === 'approved') return '#22C55E';
+    if (status === 'under_review') return '#3B82F6'; // Blue for review
     if (status === 'rejected') return '#EF4444';
     return '#F4B400';
   };
@@ -279,8 +283,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
   statusText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '800',
   },
   cardQuantity: {

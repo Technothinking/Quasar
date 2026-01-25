@@ -1,6 +1,5 @@
-import { execute, query } from './sqlite';
+import { supabase } from '../lib/supabase';
 import { today, now } from '../utils/time';
-import { v4 as uuidv4 } from 'uuid';
 
 /* ---------- CHECK IN ---------- */
 
@@ -10,52 +9,66 @@ export const checkIn = async ({
   role = 'supervisor',
   method = 'supervisor',
 }) => {
-  return await execute(
-    `INSERT INTO attendances (
-      local_id,
-      project_id,
-      user_id,
-      role,
-      date,
-      check_in_time,
-      method,
-      status,
-      sync_status,
-      created_at
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      uuidv4(),
-      projectId,
-      userId,
-      role,
-      today(),
-      now(),
-      method,
-      'present',
-      'pending',
-      now(),
-    ]
-  );
+  const { data, error } = await supabase
+    .from('attendances')
+    .insert([
+      {
+        project_id: projectId,
+        user_id: userId,
+        role: role,
+        date: today(),
+        check_in_time: new Date().toISOString(),
+        method: method,
+        status: 'present',
+      }
+    ]);
+
+  if (error) throw error;
+  return data;
 };
 
 /* ---------- CHECK OUT ---------- */
 
-export const checkOut = async (userId) => {
-  return await execute(
-    `UPDATE attendances
-     SET check_out_time = ?, updated_at = ?, sync_status = 'pending'
-     WHERE user_id = ? AND date = ?`,
-    [now(), now(), userId, today()]
-  );
+export const checkOut = async (userId, projectId) => {
+  const { data, error } = await supabase
+    .from('attendances')
+    .update({
+      check_out_time: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('user_id', userId)
+    .eq('project_id', projectId)
+    .eq('date', today());
+
+  if (error) throw error;
+  return data;
 };
 
 /* ---------- READ ---------- */
 
-export const getTodayAttendance = async (userId) => {
-  return await query(
-    `SELECT * FROM attendances
-     WHERE user_id = ? AND date = ?`,
-    [userId, today()]
-  );
+export const getTodayAttendance = async (userId, projectId) => {
+  const { data, error } = await supabase
+    .from('attendances')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('project_id', projectId)
+    .eq('date', today())
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+    console.error('Fetch attendance error:', error);
+    return null;
+  }
+  return data;
+};
+
+export const getAllTodayAttendance = async (projectId) => {
+  const { data, error } = await supabase
+    .from('attendances')
+    .select('*')
+    .eq('project_id', projectId)
+    .eq('date', today());
+
+  if (error) throw error;
+  return data;
 };

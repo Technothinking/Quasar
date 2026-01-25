@@ -72,17 +72,16 @@ export default function WorkerLoginScreen({ navigation }) {
         return;
       }
 
-      // 2. Success! Now verify role in project_user_roles using the user's ID
+      // 2. Success! Now verify role and get project ID
       const user = data.user;
       const { data: roleData, error: roleError } = await supabase
         .from('project_user_roles')
-        .select('role_id')
+        .select('role_id, project_id')
         .eq('user_id', user.id)
         .eq('role_id', 4) // Worker rank
         .single();
 
       if (roleError || !roleData) {
-        // If no match, sign out immediately
         await supabase.auth.signOut();
         setLoading(false);
         Alert.alert('Unauthorized', 'Access denied. You do not have Worker privileges.');
@@ -94,7 +93,7 @@ export default function WorkerLoginScreen({ navigation }) {
       Alert.alert('Success', 'Logged in successfully!');
       navigation.reset({
         index: 0,
-        routes: [{ name: 'WorkerHome' }],
+        routes: [{ name: 'WorkerHome', params: { projectId: roleData.project_id } }],
       });
 
     } catch (err) {

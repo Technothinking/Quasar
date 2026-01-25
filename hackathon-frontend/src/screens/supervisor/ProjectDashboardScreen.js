@@ -27,6 +27,7 @@ export default function ProjectDashboardScreen({ route, navigation }) {
     { title: 'GST Invoices', screen: 'GSTInvoices', icon: '🧾' },
     { title: 'CheckIn/Out', screen: 'CheckInOut', icon: '⏰' },
     { title: 'Task Assign', screen: 'TaskAssign', icon: '✅' },
+    { title: 'Stock Verification', screen: 'StockVerification', icon: '🔍' },
   ];
 
   return (

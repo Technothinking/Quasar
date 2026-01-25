@@ -83,16 +83,28 @@ export default function MaterialApprovalScreen({ route }) {
       <Text style={styles.quantity}>Quantity: {item.quantity_requested} {item.unit}</Text>
       <Text style={styles.requestedBy}>Requested By: {item.submitted}</Text>
 
-      {item.status === 'pending' && (
-        <View style={styles.actionRow}>
+      <View style={styles.actionRow}>
+        {item.status !== 'approved' && (
           <TouchableOpacity
             style={[styles.actionButton, styles.approveBtn]}
             onPress={() => updateStatus(item.id, 'approved')}
             disabled={actionLoading === item.id}
           >
-            <Text style={styles.actionText}>{actionLoading === item.id ? '...' : 'APPROVE'}</Text>
+            <Text style={styles.actionText}>{actionLoading === item.id ? '...' : 'CONFIRM'}</Text>
           </TouchableOpacity>
+        )}
 
+        {item.status !== 'under_review' && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.reviewBtn]}
+            onPress={() => updateStatus(item.id, 'under_review')}
+            disabled={actionLoading === item.id}
+          >
+            <Text style={styles.actionText}>{actionLoading === item.id ? '...' : 'REVIEW'}</Text>
+          </TouchableOpacity>
+        )}
+
+        {item.status === 'pending' && (
           <TouchableOpacity
             style={[styles.actionButton, styles.rejectBtn]}
             onPress={() => updateStatus(item.id, 'rejected')}
@@ -100,8 +112,18 @@ export default function MaterialApprovalScreen({ route }) {
           >
             <Text style={styles.actionText}>{actionLoading === item.id ? '...' : 'REJECT'}</Text>
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+
+        {item.status !== 'pending' && item.status !== 'approved' && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.pendingBtn]}
+            onPress={() => updateStatus(item.id, 'pending')}
+            disabled={actionLoading === item.id}
+          >
+            <Text style={styles.actionText}>{actionLoading === item.id ? '...' : 'PENDING'}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 
@@ -235,15 +257,23 @@ const styles = StyleSheet.create({
   },
   approveBtn: {
     backgroundColor: '#22C55E',
-    marginRight: 10,
+    marginRight: 8,
+  },
+  reviewBtn: {
+    backgroundColor: '#3B82F6', // Blue for Review
+    marginRight: 8,
   },
   rejectBtn: {
     backgroundColor: '#EF4444',
+    marginRight: 8,
+  },
+  pendingBtn: {
+    backgroundColor: '#F4B400',
   },
   actionText: {
     color: '#0B0F14',
     fontWeight: '800',
-    fontSize: 14,
+    fontSize: 12,
   },
 
   infoBox: {

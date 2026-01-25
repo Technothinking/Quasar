@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-export default function WorkerHomeScreen({ navigation }) {
+export default function WorkerHomeScreen({ route, navigation }) {
+  const { projectId } = route.params || {};
+
   /* 📦 Modules */
   const modules = [
     { title: 'GPS Attendance', screen: 'GPSAttendance', icon: '📍' },
@@ -17,7 +19,10 @@ export default function WorkerHomeScreen({ navigation }) {
         <View style={styles.logo}>
           <Text style={styles.logoEmoji}>🏗</Text>
         </View>
-        <Text style={styles.title}>Worker Panel</Text>
+        <View>
+          <Text style={styles.title}>Worker Dashboard</Text>
+          <Text style={{ color: '#9CA3AF', fontSize: 12 }}>Project ID: {projectId || '...'}</Text>
+        </View>
       </View>
 
       {/* 📦 Module Cards */}
@@ -25,7 +30,7 @@ export default function WorkerHomeScreen({ navigation }) {
         <TouchableOpacity
           key={item.title}
           style={styles.card}
-          onPress={() => navigation.navigate(item.screen)}
+          onPress={() => navigation.navigate(item.screen, { projectId })}
           activeOpacity={0.85}
         >
           <Text style={styles.cardIcon}>{item.icon}</Text>
