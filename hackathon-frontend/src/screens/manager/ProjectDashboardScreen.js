@@ -21,6 +21,7 @@ export default function ManagerProjectDashboardScreen({ route, navigation }) {
     { title: 'GST Invoices', screen: 'GSTInvoices', icon: '🧾' },
     { title: 'View DPRs', screen: 'ViewDPRs', icon: '📝' },
     { title: 'Stock Verification', screen: 'StockVerification', icon: '🔍' },
+    { title: 'Petty Cash Report', screen: 'PettyCashReport', icon: '💰' },
   ];
 
   return (

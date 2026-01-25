@@ -10,6 +10,7 @@ import StockTrackingScreen from '../screens/manager/StockTrackingScreen';
 import GSTInvoices from '../screens/manager/GSTInvoices';
 import DPRViewScreen from '../screens/manager/DPRViewScreen';
 import StockVerificationScreen from '../screens/supervisor/StockVerificationScreen';
+import PettyCashReportScreen from '../screens/manager/PettyCashReportScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -77,6 +78,12 @@ export default function ManagerStack() {
         name="StockVerification"
         component={StockVerificationScreen}
         options={{ title: 'Stock Verification' }}
+      />
+
+      <Stack.Screen
+        name="PettyCashReport"
+        component={PettyCashReportScreen}
+        options={{ title: 'Petty Cash Report' }}
       />
 
     </Stack.Navigator>

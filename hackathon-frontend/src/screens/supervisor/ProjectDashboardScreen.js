@@ -30,6 +30,7 @@ export default function ProjectDashboardScreen({ route, navigation }) {
     { title: 'Cost Estimates', screen: 'CostEstimates', icon: '💰' },
     { title: 'Tool Library', screen: 'ToolLibrary', icon: '🛠' },
     { title: 'Worker Updates', screen: 'WorkerUpdatesView', icon: '👷‍♀️' },
+    { title: 'Petty Cash', screen: 'PettyCash', icon: '💰' },
   ];
 
   return (

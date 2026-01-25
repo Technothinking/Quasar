@@ -9,6 +9,7 @@ export const BUCKETS = {
   VERIFICATIONS: 'material-photos', // Ensure this exists in Supabase Storage
   RA_BILL: 'RA_BILL',
   WORK_UPDATES: 'work-updates',
+  PETTY_CASH: 'petty-cash-receipts',
 };
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
