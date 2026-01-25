@@ -29,6 +29,7 @@ export default function ProjectDashboardScreen({ route, navigation }) {
     { title: 'Stock Verification', screen: 'StockVerification', icon: '🔍' },
     { title: 'Cost Estimates', screen: 'CostEstimates', icon: '💰' },
     { title: 'Tool Library', screen: 'ToolLibrary', icon: '🛠' },
+    { title: 'Worker Updates', screen: 'WorkerUpdatesView', icon: '👷‍♀️' },
   ];
 
   return (

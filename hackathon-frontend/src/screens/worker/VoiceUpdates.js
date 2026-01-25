@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Image,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useLanguage } from '../../context/LanguageContext';
+import { supabase, BUCKETS } from '../../lib/supabase';
+import { decode } from 'base64-arraybuffer';
 
 /* 🌐 Translations */
 const translations = {
@@ -44,12 +50,98 @@ const translations = {
   },
 };
 
-export default function VoiceUpdates() {
+export default function VoiceUpdates({ route }) {
+  const { projectId } = route.params || {};
   const { language } = useLanguage();
   const t = translations[language];
 
   const [workDone, setWorkDone] = useState('');
-  const [location, setLocation] = useState('');
+  const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.5,
+      base64: true,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0]);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!workDone.trim()) {
+      Alert.alert('Error', 'Please describe your work done.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // 1. Insert into work_updates
+      const { data: updateData, error: updateError } = await supabase
+        .from('work_updates')
+        .insert([{
+          project_id: projectId,
+          user_id: user.id,
+          work_description: workDone
+        }])
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      // 2. Upload image if exists
+      if (image) {
+        const fileExt = image.uri.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        const filePath = `updates/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from(BUCKETS.WORK_UPDATES)
+          .upload(filePath, decode(image.base64), {
+            contentType: `image/${fileExt}`,
+          });
+
+        if (uploadError) throw uploadError;
+
+        // 3. Insert into work_update_photos
+        const { error: photoError } = await supabase
+          .from('work_update_photos')
+          .insert([{
+            work_update_id: updateData.id,
+            file_path: filePath
+          }]);
+
+        if (photoError) throw photoError;
+      }
+
+      Alert.alert('Success', 'Work update submitted successfully!');
+      setWorkDone('');
+      setImage(null);
+    } catch (err) {
+      Alert.alert('Error', err.message);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#F4B400" />
+        <Text style={{ color: 'white', textAlign: 'center', marginTop: 10 }}>Submitting...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -78,28 +170,18 @@ export default function VoiceUpdates() {
         </TouchableOpacity>
       </View>
 
-      {/* Location Input */}
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.input}
-          placeholder={t.location}
-          placeholderTextColor="#9CA3AF"
-          value={location}
-          onChangeText={setLocation}
-        />
-        <TouchableOpacity style={styles.micBtn}>
-          <Text style={styles.micIcon}>🎤</Text>
-        </TouchableOpacity>
-      </View>
-
       {/* Photo Upload */}
-      <TouchableOpacity style={styles.photoBox}>
+      <TouchableOpacity style={styles.photoBox} onPress={pickImage}>
         <Text style={styles.photoIcon}>📷</Text>
-        <Text style={styles.photoText}>{t.photo}</Text>
+        <Text style={styles.photoText}>{image ? 'Photo Selected' : t.photo}</Text>
       </TouchableOpacity>
 
+      {image && (
+        <Image source={{ uri: image.uri }} style={styles.previewImage} />
+      )}
+
       {/* Submit */}
-      <TouchableOpacity style={styles.submitBtn}>
+      <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
         <Text style={styles.submitText}>{t.submit}</Text>
       </TouchableOpacity>
     </View>
@@ -189,5 +271,13 @@ const styles = StyleSheet.create({
     color: '#0B0F14',
     fontWeight: '800',
     fontSize: 16,
+  },
+  previewImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#1F2937',
   },
 });
