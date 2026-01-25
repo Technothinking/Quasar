@@ -24,7 +24,6 @@ export default function ProjectDashboardScreen({ route, navigation }) {
     { title: 'Site Photos', screen: 'SitePhotos', icon: '📸' },
     { title: 'Task Management', screen: 'TaskManagement', icon: '📋' },
     { title: 'Stock Update', screen: 'StockUpdate', icon: '🏗' },
-    { title: 'GST Invoices', screen: 'GSTInvoices', icon: '🧾' },
     { title: 'CheckIn/Out', screen: 'CheckInOut', icon: '⏰' },
     { title: 'Task Assign', screen: 'TaskAssign', icon: '✅' },
     { title: 'Stock Verification', screen: 'StockVerification', icon: '🔍' },

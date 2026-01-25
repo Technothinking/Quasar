@@ -7,6 +7,7 @@ export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Bucket Identifiers (Centralized Management)
 export const BUCKETS = {
   VERIFICATIONS: 'material-photos', // Ensure this exists in Supabase Storage
+  RA_BILL: 'RA_BILL',
 };
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

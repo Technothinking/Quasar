@@ -12,7 +12,6 @@ import IssueScreen from '../screens/supervisor/IssueScreen';
 import SitePhotosScreen from '../screens/supervisor/SitePhotosScreen';
 import TaskManagementScreen from '../screens/supervisor/TaskManagementScreen';
 import StockUpdateScreen from '../screens/supervisor/StockUpdateScreen';
-import GSTInvoices from '../screens/supervisor/GSTInvoices';
 import CheckInOutScreen from '../screens/supervisor/CheckInOutScreen';
 import TaskAssign from '../screens/supervisor/TaskAssign';
 import StockVerificationScreen from '../screens/supervisor/StockVerificationScreen';
@@ -48,7 +47,6 @@ export default function SupervisorStack() {
       <Stack.Screen name="SitePhotos" component={SitePhotosScreen} />
       <Stack.Screen name="TaskManagement" component={TaskManagementScreen} />
       <Stack.Screen name="StockUpdate" component={StockUpdateScreen} />
-      <Stack.Screen name="GSTInvoices" component={GSTInvoices} />
       <Stack.Screen name="CheckInOut" component={CheckInOutScreen} />
       <Stack.Screen name="TaskAssign" component={TaskAssign} />
       <Stack.Screen name="StockVerification" component={StockVerificationScreen} />
