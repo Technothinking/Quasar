@@ -1,0 +1,15 @@
+{
+  "tasks": "EMPTY",
+  "task_assignments": "ERROR: {'message': \"Could not find the table 'public.task_assignments' in the schema cache\", 'code': 'PGRST205', 'hint': None, 'details': None}",
+  "project_tasks": "ERROR: {'message': \"Could not find the table 'public.project_tasks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.project_sites'\", 'details': None}",
+  "project_user_roles": [
+    "project_id",
+    "user_id",
+    "role_id"
+  ],
+  "profiles": [
+    "id",
+    "full_name",
+    "created_at"
+  ]
+}

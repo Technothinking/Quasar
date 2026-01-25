@@ -1,0 +1,23 @@
+{
+  "tasks": {
+    "exists": true,
+    "columns": "EMPTY",
+    "sample": null
+  },
+  "Tasks": {
+    "exists": false,
+    "error": "{'message': \"Could not find the table 'public.Tasks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.tasks'\", 'details': None}"
+  },
+  "project_tasks": {
+    "exists": false,
+    "error": "{'message': \"Could not find the table 'public.project_tasks' in the schema cache\", 'code': 'PGRST205', 'hint': \"Perhaps you meant the table 'public.project_sites'\", 'details': None}"
+  },
+  "task_assignments": {
+    "exists": false,
+    "error": "{'message': \"Could not find the table 'public.task_assignments' in the schema cache\", 'code': 'PGRST205', 'hint': None, 'details': None}"
+  },
+  "task_management": {
+    "exists": false,
+    "error": "{'message': \"Could not find the table 'public.task_management' in the schema cache\", 'code': 'PGRST205', 'hint': None, 'details': None}"
+  }
+}

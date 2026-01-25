@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,79 +6,237 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
 } from 'react-native';
+import { supabase } from '../../lib/supabase';
 
-export default function TaskAssignmentScreen() {
-  const [task, setTask] = useState('');
-  const [assignee, setAssignee] = useState('');
+export default function TaskAssignmentScreen({ route }) {
+  const { project } = route.params || {};
+  const projectId = project?.id;
+
+  const [supervisors, setSupervisors] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAssignTask = () => {
-    if (!task.trim() || !assignee.trim()) {
-      alert('Please fill both fields!');
+  // Form state
+  const [task, setTask] = useState('');
+  const [taskDescription, setTaskDescription] = useState('');
+  const [selectedSupervisor, setSelectedSupervisor] = useState(null);
+
+  useEffect(() => {
+    if (projectId) {
+      fetchData();
+    }
+  }, [projectId]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      if (!projectId) {
+        console.error('No project ID provided!');
+        Alert.alert('Error', 'No project selected. Please go back and select a project.');
+        setLoading(false);
+        return;
+      }
+
+      await Promise.all([fetchSupervisors(), fetchTasks()]);
+    } catch (err) {
+      console.error('Fetch data error:', err);
+      Alert.alert('Error', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSupervisors = async () => {
+    try {
+      console.log('Fetching supervisors for project:', projectId);
+      // 1. Get all user_ids with role_id = 3 (supervisor) for this project
+      const { data: roles, error: rolesError } = await supabase
+        .from('project_user_roles')
+        .select('user_id')
+        .eq('project_id', projectId)
+        .eq('role_id', 3);
+
+      if (rolesError) {
+        console.error('Roles fetch error:', rolesError);
+        throw rolesError;
+      }
+
+      console.log('Found roles:', roles);
+      const userIds = roles.map(r => r.user_id);
+      if (userIds.length === 0) {
+        console.log('No supervisors found for this project');
+        setSupervisors([]);
+        return;
+      }
+
+      // 2. Fetch profile details (full_name) for these users
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Profiles fetch error:', profilesError);
+        throw profilesError;
+      }
+      console.log('Found supervisors:', profiles);
+      setSupervisors(profiles || []);
+    } catch (err) {
+      console.error('Failed to fetch supervisors:', err);
+      setSupervisors([]);
+    }
+  };
+
+  const fetchTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Tasks table error:', error);
+        // If table doesn't exist, just set empty array
+        if (error.code === '42P01' || error.message.includes('does not exist')) {
+          console.log('Tasks table does not exist yet - using empty array');
+          setTasks([]);
+          return;
+        }
+        throw error;
+      }
+      setTasks(data || []);
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
+      setTasks([]);
+    }
+  };
+
+  const handleAssignTask = async () => {
+    if (!task.trim() || !selectedSupervisor) {
+      Alert.alert('Error', 'Please fill task details and select a supervisor');
       return;
     }
 
-    const newTask = {
-      id: Date.now().toString(),
-      task,
-      assignee,
-      status: 'Pending',
-    };
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .insert([{
+          project_id: projectId,
+          task_description: taskDescription || task,
+          assigned_to: selectedSupervisor,
+          status: 'pending'
+        }]);
 
-    setTasks([newTask, ...tasks]);
-    setTask('');
-    setAssignee('');
+      if (error) throw error;
+
+      Alert.alert('Success', 'Task assigned successfully!');
+      setTask('');
+      setTaskDescription('');
+      setSelectedSupervisor(null);
+      fetchTasks();
+    } catch (err) {
+      Alert.alert('Error', err.message);
+    }
   };
 
-  const renderTask = ({ item }) => (
-    <View style={styles.taskCard}>
-      <Text style={styles.taskTitle}>{item.task}</Text>
-      <Text style={styles.taskAssignee}>👷 Assigned to: {item.assignee}</Text>
-      <Text
-        style={[
-          styles.taskStatus,
-          item.status === 'Done'
-            ? styles.done
-            : item.status === 'In Progress'
-            ? styles.inProgress
-            : styles.pending,
-        ]}
-      >
-        ⏳ Status: {item.status}
-      </Text>
-    </View>
-  );
+  const renderTask = ({ item }) => {
+    const supervisor = supervisors.find(s => s.id === item.assigned_to);
+    return (
+      <View style={styles.taskCard}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Text style={styles.taskTitle}>{item.task_description}</Text>
+          <Text style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+            {item.status?.toUpperCase()}
+          </Text>
+        </View>
+        <Text style={styles.taskAssignee}>👷 Assigned to: {supervisor?.full_name || 'Unknown'}</Text>
+        <Text style={styles.taskMeta}>� Created: {new Date(item.created_at).toLocaleDateString()}</Text>
+        {item.updated_at && (
+          <Text style={styles.taskMeta}>� Updated: {new Date(item.updated_at).toLocaleDateString()}</Text>
+        )}
+      </View>
+    );
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return '#22C55E';
+      case 'in_progress': return '#F4B400';
+      case 'pending': return '#9CA3AF';
+      default: return '#9CA3AF';
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#F4B400" />
+        <Text style={{ color: 'white', marginTop: 10 }}>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 30 }}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoBox}>
           <Text style={styles.logo}>🏗</Text>
         </View>
-        <Text style={styles.heading}>Assign Tasks</Text>
+        <View>
+          <Text style={styles.heading}>Assign Tasks</Text>
+          <Text style={{ color: '#9CA3AF', fontSize: 12 }}>{project?.name || 'Project'}</Text>
+        </View>
       </View>
 
       {/* Task Assignment Form */}
       <View style={styles.formCard}>
-        <Text style={styles.label}>Task Description</Text>
+        <Text style={styles.label}>Task Title *</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter task details"
+          placeholder="Enter task title"
           placeholderTextColor="#9CA3AF"
           value={task}
           onChangeText={setTask}
         />
 
-        <Text style={styles.label}>Assign To</Text>
+        <Text style={styles.label}>Description</Text>
         <TextInput
-          style={styles.input}
-          placeholder="Supervisor / Worker name"
+          style={[styles.input, { height: 60 }]}
+          placeholder="Enter task details (optional)"
           placeholderTextColor="#9CA3AF"
-          value={assignee}
-          onChangeText={setAssignee}
+          multiline
+          value={taskDescription}
+          onChangeText={setTaskDescription}
         />
+
+        <Text style={styles.label}>Assign To Supervisor *</Text>
+        {supervisors.length === 0 ? (
+          <Text style={{ color: '#9CA3AF', fontSize: 13, marginBottom: 12 }}>
+            No supervisors found for this project
+          </Text>
+        ) : (
+          <View style={{ marginBottom: 12 }}>
+            {supervisors.map(sup => (
+              <TouchableOpacity
+                key={sup.id}
+                style={[
+                  styles.supervisorChip,
+                  selectedSupervisor === sup.id && styles.supervisorChipSelected
+                ]}
+                onPress={() => setSelectedSupervisor(sup.id)}
+              >
+                <Text style={styles.supervisorText}>{sup.full_name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         <TouchableOpacity style={styles.button} onPress={handleAssignTask}>
           <Text style={styles.buttonText}>Assign Task</Text>
@@ -87,16 +245,17 @@ export default function TaskAssignmentScreen() {
 
       {/* Assigned Tasks List */}
       <Text style={styles.sectionTitle}>Assigned Tasks</Text>
-      <FlatList
-        data={tasks}
-        keyExtractor={(item) => item.id}
-        renderItem={renderTask}
-        contentContainerStyle={{ paddingBottom: 30 }}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No tasks assigned yet</Text>
-        }
-      />
-    </View>
+      {tasks.length === 0 ? (
+        <Text style={styles.emptyText}>No tasks assigned yet</Text>
+      ) : (
+        <FlatList
+          data={tasks}
+          keyExtractor={(item) => item.id?.toString()}
+          renderItem={renderTask}
+          scrollEnabled={false}
+        />
+      )}
+    </ScrollView>
   );
 }
 
@@ -131,6 +290,23 @@ const styles = StyleSheet.create({
     borderColor: '#1F2937',
     marginBottom: 12,
   },
+  supervisorChip: {
+    backgroundColor: '#0B0F14',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#1F2937',
+  },
+  supervisorChipSelected: {
+    backgroundColor: '#F4B400',
+    borderColor: '#F4B400',
+  },
+  supervisorText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
   button: {
     backgroundColor: '#F4B400',
     padding: 14,
@@ -155,11 +331,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1F2937',
   },
-  taskTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', marginBottom: 6 },
-  taskAssignee: { color: '#9CA3AF', fontSize: 13, marginBottom: 4 },
-  taskStatus: { fontSize: 12, fontWeight: '600', marginTop: 4 },
-  done: { color: '#22C55E' },
-  inProgress: { color: '#F59E0B' },
-  pending: { color: '#F4B400' },
+  taskTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  taskDescription: { color: '#9CA3AF', fontSize: 13, marginBottom: 8, marginTop: 4 },
+  taskAssignee: { color: '#9CA3AF', fontSize: 13, marginTop: 4 },
+  taskMeta: { color: '#9CA3AF', fontSize: 12, marginTop: 4 },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0B0F14',
+  },
   emptyText: { color: '#9CA3AF', textAlign: 'center', marginTop: 30 },
 });

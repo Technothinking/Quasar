@@ -46,7 +46,7 @@ export default function ManagerProjectDashboardScreen({ route, navigation }) {
             key={index}
             style={styles.card}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate(item.screen, { projectId: project.id, projectName: project.name })}
+            onPress={() => navigation.navigate(item.screen, { project: project, projectId: project.id, projectName: project.name })}
           >
             <Text style={styles.icon}>{item.icon}</Text>
             <Text style={styles.text}>{item.title}</Text>

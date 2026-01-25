@@ -26,6 +26,7 @@ export default function ProjectDashboardScreen({ route, navigation }) {
     { title: 'Stock Update', screen: 'StockUpdate', icon: '🏗' },
     { title: 'GST Invoices', screen: 'GSTInvoices', icon: '🧾' },
     { title: 'CheckIn/Out', screen: 'CheckInOut', icon: '⏰' },
+    { title: 'Task Assign', screen: 'TaskAssign', icon: '✅' },
   ];
 
   return (
@@ -50,7 +51,7 @@ export default function ProjectDashboardScreen({ route, navigation }) {
           <TouchableOpacity
             key={index}
             style={styles.card}
-            onPress={() => navigation.navigate(item.screen, { projectId: project.id })}
+            onPress={() => navigation.navigate(item.screen, { project })}
           >
             <Text style={styles.icon}>{item.icon}</Text>
             <Text style={styles.text}>{item.title}</Text>
